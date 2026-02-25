@@ -1,13 +1,18 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/data/shopData";
-import { useAchievements } from "@/hooks/useAchievements";
+import { toast } from "sonner";
 import chestImg from "@/assets/chest.png";
 import swordImg from "@/assets/sword.png";
 import crownImg from "@/assets/crown.png";
 import keyImg from "@/assets/key.png";
 
 const imageMap: Record<string, string> = {
+  vip: crownImg,
+  rank: crownImg,
+  crate: chestImg,
+  kit: swordImg,
+  money: keyImg,
   chest: chestImg,
   sword: swordImg,
   crown: crownImg,
@@ -38,7 +43,6 @@ export default function PurchaseModal({ product, onClose }: PurchaseModalProps) 
   const [quantity, setQuantity] = useState(1);
   const [particles, setParticles] = useState<{ id: number; tx: number; ty: number }[]>([]);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const { showAchievement } = useAchievements();
 
   const spawnParticles = useCallback(() => {
     const newParticles = Array.from({ length: 8 }).map((_, i) => ({
@@ -53,7 +57,10 @@ export default function PurchaseModal({ product, onClose }: PurchaseModalProps) 
   const handlePurchase = () => {
     if (!nick.trim()) return;
     spawnParticles();
-    showAchievement("Dodano do koszyka!", `${product?.name} × ${quantity}`);
+    toast.success("Dodano do koszyka!", {
+      description: `${product?.name} × ${quantity}`,
+      duration: 3000,
+    });
     setTimeout(onClose, 600);
   };
 
@@ -105,80 +112,89 @@ export default function PurchaseModal({ product, onClose }: PurchaseModalProps) 
 
             {/* Right: Details */}
             <div className="flex-1 space-y-4">
-              <p className="text-sm text-muted-foreground">{product.description}</p>
+              {/* Top part: Description & Bonuses */}
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
 
-              {/* Bonuses list */}
-              {product.bonuses && product.bonuses.length > 0 && (
-                <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
-                  <span className="text-[10px] font-pixel text-primary tracking-wider">ZAWARTOŚĆ</span>
-                  <ul className="space-y-1">
-                    {product.bonuses.map((bonus, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
-                        <span className="text-primary mt-0.5 text-[10px]">✦</span>
-                        <span>{bonus}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Nick input */}
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Nick gracza</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={nick}
-                    onChange={(e) => setNick(e.target.value)}
-                    placeholder="Wpisz swój nick..."
-                    className="w-full bg-background border-2 border-border text-foreground px-3 py-2 text-sm rounded focus:border-primary focus:outline-none transition-colors font-mono"
-                  />
-                  {nick.length >= 3 && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald font-pixel text-xs">
-                      ✓
-                    </span>
-                  )}
-                </div>
+                {product.bonuses && product.bonuses.length > 0 && (
+                  <div className="bg-secondary/30 rounded-lg p-3.5 space-y-2 border border-border/40">
+                    <span className="text-[10px] font-pixel text-primary tracking-wider">ZAWARTOŚĆ PAKIETU</span>
+                    <ul className="space-y-1.5">
+                      {product.bonuses.map((bonus, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-foreground/90">
+                          <span className="text-primary mt-0.5 text-[10px]">✦</span>
+                          <span>{bonus}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
-              {/* Quantity */}
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Ilość</label>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 bg-secondary text-secondary-foreground rounded flex items-center justify-center hover:bg-surface-hover transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="w-10 text-center font-bold">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-8 h-8 bg-secondary text-secondary-foreground rounded flex items-center justify-center hover:bg-surface-hover transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Total & Buy */}
-              <div className="flex items-center justify-between pt-2">
+              {/* Price & Quantity flex */}
+              <div className="flex items-center justify-between py-2 border-y border-border/30 my-4">
                 <div>
-                  <span className="text-xs text-muted-foreground">Suma: </span>
-                  <span className="text-xl font-bold text-primary">
-                    {(product.price * quantity).toFixed(2)} PLN
+                  <label className="text-[10px] font-pixel text-muted-foreground uppercase mb-1 block">WYBIERZ ILOŚĆ</label>
+                  <div className="flex items-center gap-1 bg-secondary/50 rounded p-1 border border-border">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-7 h-7 bg-background rounded text-foreground hover:bg-muted transition-colors flex items-center justify-center font-mono"
+                    >
+                      -
+                    </button>
+                    <span className="w-8 text-center font-bold text-sm font-mono">{quantity}</span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-7 h-7 bg-background rounded text-foreground hover:bg-muted transition-colors flex items-center justify-center font-mono"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-pixel text-muted-foreground uppercase mb-1 block">DO ZAPŁATY</span>
+                  <span className="text-2xl font-bold text-primary tracking-tight">
+                    {(product.price * quantity).toFixed(2)} <span className="text-sm text-primary/70">PLN</span>
                   </span>
                 </div>
               </div>
 
-              <div className="relative">
+              {/* Nick player input */}
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-2 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+                <label className="text-[10px] font-pixel text-primary uppercase mb-2 block tracking-wider pl-2">KTO OTRZYMA PAKIET?</label>
+                <div className="relative pl-2">
+                  <input
+                    type="text"
+                    value={nick}
+                    onChange={(e) => setNick(e.target.value)}
+                    placeholder="Wpisz tutaj swój nick Minecraft"
+                    autoFocus
+                    className="w-full bg-background border-2 border-border text-foreground px-4 py-3 text-base rounded focus:border-primary focus:outline-none transition-all font-mono shadow-inner block"
+                  />
+                  {nick.length >= 3 && (
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald font-pixel text-sm drop-shadow">
+                      ✓
+                    </span>
+                  )}
+                </div>
+                {nick.length > 0 && nick.length < 3 && (
+                  <p className="text-[10px] text-destructive mt-1.5 pl-2">Nick musi mieć co najmniej 3 znaki</p>
+                )}
+              </div>
+
+              {/* Buy button */}
+              <div className="relative pt-2">
                 <button
                   ref={btnRef}
                   onClick={handlePurchase}
                   disabled={nick.length < 3}
-                  className="w-full py-3 bg-primary text-primary-foreground font-bold rounded pixel-border-gold text-sm hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className={`w-full py-4 font-bold rounded text-sm tracking-wider transition-all duration-300 ${nick.length >= 3
+                      ? "bg-primary text-primary-foreground pixel-border-gold glow-gold shadow-lg hover:brightness-110 translate-y-0"
+                      : "bg-muted text-muted-foreground cursor-not-allowed opacity-70"
+                    }`}
                 >
-                  KUP TERAZ
+                  <span className="font-pixel text-[12px]">{nick.length >= 3 ? "PRZEJDŹ DO PŁATNOŚCI" : "WPISZ NICK ABY KUPIĆ"}</span>
                 </button>
 
                 {/* Particles */}

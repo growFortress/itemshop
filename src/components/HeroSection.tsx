@@ -1,9 +1,21 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import floatingIsland from "@/assets/floating-island.png";
 
 export default function HeroSection() {
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 15 }).map((_, i) => ({
+        left: `${(i * 7.3 + 13) % 100}%`,
+        top: `${(i * 11.7 + 5) % 100}%`,
+        delay: `${(i * 0.33) % 5}s`,
+        duration: `${4 + (i % 5)}s`,
+      })),
+    []
+  );
+
   return (
-    <section className="relative flex flex-col items-center justify-center overflow-hidden noise-overlay py-4">
+    <section className="relative flex flex-col items-center justify-center overflow-hidden noise-overlay py-8">
       {/* Floating island background */}
       <img
         src={floatingIsland}
@@ -13,15 +25,15 @@ export default function HeroSection() {
 
       {/* Decorative particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 15 }).map((_, i) => (
+        {particles.map((p, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 rounded-full bg-primary/30"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animation: `float ${4 + Math.random() * 4}s ease-in-out infinite`,
+              left: p.left,
+              top: p.top,
+              animationDelay: p.delay,
+              animation: `float ${p.duration} ease-in-out infinite`,
             }}
           />
         ))}
@@ -30,23 +42,23 @@ export default function HeroSection() {
       {/* Main content */}
       <div className="relative z-10 text-center px-4">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
         >
-          <h1 className="font-pixel text-3xl sm:text-5xl md:text-6xl text-primary text-shadow-pixel tracking-wider mb-2 leading-tight">
+          <h1 className="font-pixel text-2xl sm:text-4xl md:text-5xl text-primary text-shadow-pixel tracking-wider mb-1 leading-tight">
             CRAFTED.PL
           </h1>
-          <p className="font-pixel text-xs sm:text-sm text-muted-foreground tracking-widest">
+          <p className="font-pixel text-[10px] sm:text-xs text-muted-foreground tracking-widest">
             ITEM SHOP
           </p>
         </motion.div>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-muted-foreground text-base sm:text-lg max-w-md mx-auto mt-3"
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="text-muted-foreground text-sm sm:text-base max-w-sm mx-auto mt-2"
         >
           Ulepsz swoją rozgrywkę na najlepszym serwerze
         </motion.p>
@@ -62,7 +74,7 @@ export default function HeroSection() {
             <span>127 online</span>
           </div>
           <div className="w-px h-4 bg-border" />
-          <span className="font-mono text-foreground">crafted.pl</span>
+          <a href="https://crafted.pl" target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-primary transition-colors font-semibold">crafted.pl</a>
         </motion.div>
       </div>
     </section>

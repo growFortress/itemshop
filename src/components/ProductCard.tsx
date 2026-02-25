@@ -6,6 +6,12 @@ import crownImg from "@/assets/crown.png";
 import keyImg from "@/assets/key.png";
 
 const imageMap: Record<string, string> = {
+  vip: crownImg,
+  rank: crownImg,
+  crate: chestImg,
+  kit: swordImg,
+  money: keyImg,
+  // Zachowujemy stare klucze na wszelki wypadek, jeśli są używane gdzie indziej
   chest: chestImg,
   sword: swordImg,
   crown: crownImg,
@@ -46,6 +52,12 @@ const badgeConfig: Record<string, { label: string; className: string }> = {
   sale: { label: "💰 SALE", className: "bg-emerald text-primary-foreground shadow-lg shadow-emerald/20" },
 };
 
+const rankTierStars: Record<string, string> = {
+  rare: "★",
+  epic: "★★",
+  legendary: "★★★",
+};
+
 interface ProductCardProps {
   product: Product;
   index: number;
@@ -65,7 +77,7 @@ export default function ProductCard({ product, index, onSelect }: ProductCardPro
     >
       <button
         onClick={() => onSelect(product)}
-        className={`w-full text-left bg-card rounded-xl p-5 card-lift card-rarity-${product.rarity} cursor-pointer relative overflow-hidden border border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300`}
+        className={`w-full text-left bg-card rounded-xl p-4 sm:p-5 card-lift card-rarity-${product.rarity} cursor-pointer relative overflow-hidden border border-border/60 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full`}
       >
         {/* Legendary shimmer overlay */}
         {isLegendary && <div className="absolute inset-0 shimmer-legendary rounded-xl pointer-events-none" />}
@@ -78,11 +90,11 @@ export default function ProductCard({ product, index, onSelect }: ProductCardPro
         )}
 
         {/* Image — premium card-style with generous padding */}
-        <div className={`relative flex justify-center items-center py-8 mb-4 rounded-xl ${rarityImageBg[product.rarity]} ${rarityRingAccent[product.rarity]}`}>
+        <div className={`relative flex justify-center items-center py-6 sm:py-8 mb-4 rounded-xl ${rarityImageBg[product.rarity]} ${rarityRingAccent[product.rarity]}`}>
           <img
             src={imageMap[product.image]}
             alt={product.name}
-            className="w-36 h-36 object-contain pixel-art transition-transform duration-300 group-hover:scale-110 img-hover-float drop-shadow-lg"
+            className="w-32 h-32 sm:w-40 sm:h-40 object-contain pixel-art transition-transform duration-500 group-hover:scale-110 img-hover-float drop-shadow-xl"
           />
           {/* Subtle radial glow behind image */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -97,34 +109,26 @@ export default function ProductCard({ product, index, onSelect }: ProductCardPro
           </div>
         </div>
 
-        <h3 className="font-semibold text-foreground text-[15px] leading-snug mb-1.5 tracking-tight">
+        <h3 className="font-semibold text-foreground text-[16px] leading-snug mb-1 tracking-tight">
           {product.name}
+          {product.image === "crown" && rankTierStars[product.rarity] && (
+            <span className={`ml-1.5 text-xs ${rarityBadgeStyles[product.rarity].split(" ")[0]}`}>
+              {rankTierStars[product.rarity]}
+            </span>
+          )}
         </h3>
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed flex-grow">
           {product.description}
         </p>
 
-        {/* Top bonuses preview */}
-        {product.bonuses && product.bonuses.length > 0 && (
-          <div className="mb-4 space-y-1.5 pl-0.5">
-            {product.bonuses.slice(0, 2).map((bonus, i) => (
-              <div key={i} className="flex items-center gap-2 text-[11px] text-foreground/75">
-                <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
-                <span className="truncate">{bonus}</span>
-              </div>
-            ))}
-            {product.bonuses.length > 2 && (
-              <span className="text-[10px] text-muted-foreground pl-3">+{product.bonuses.length - 2} więcej...</span>
-            )}
+        {/* Price & CTA hook footer */}
+        <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-border/40">
+          <div className="flex items-center justify-center">
+            <span className="text-xl font-bold text-primary tracking-tight">{product.price.toFixed(2)} PLN</span>
           </div>
-        )}
-
-        {/* Price footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-border/40">
-          <span className="text-lg font-bold text-primary tracking-tight">{product.price.toFixed(2)} PLN</span>
-          <span className="text-[11px] font-medium text-primary/70 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-1 group-hover:translate-x-0">
-            Kup teraz →
-          </span>
+          <div className="w-full py-2.5 rounded text-center text-[11px] font-bold tracking-wider uppercase bg-secondary/50 text-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-[0_0_15px_rgba(255,170,0,0.4)] transition-all duration-300">
+            Wybierz pakiet
+          </div>
         </div>
       </button>
     </motion.div>

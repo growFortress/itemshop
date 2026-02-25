@@ -5,7 +5,6 @@ import GameModeSelector from "@/components/GameModeSelector";
 import ProductGrid from "@/components/ProductGrid";
 import PurchaseModal from "@/components/PurchaseModal";
 import PlayerStatus from "@/components/PlayerStatus";
-import AchievementToasts from "@/components/AchievementToasts";
 import GameModePicker from "@/components/GameModePicker";
 
 const STORAGE_KEY = "crafted-preferred-mode";
@@ -32,12 +31,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <PlayerStatus />
-      <AchievementToasts />
 
       <HeroSection />
-      <GameModeSelector activeMode={activeMode} onModeChange={handleModeChange} />
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+        <GameModeSelector activeMode={activeMode} onModeChange={handleModeChange} />
+      </div>
 
-      <div className="border-t border-border">
+      <div>
         <ProductGrid
           activeGameMode={activeMode}
           onSelectProduct={setSelectedProduct}
