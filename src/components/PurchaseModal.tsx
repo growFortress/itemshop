@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, Sparkles } from "lucide-react";
 import { Product } from "@/data/shopData";
 import { toast } from "sonner";
 import chestImg from "@/assets/chest.png";
@@ -19,192 +20,170 @@ const imageMap: Record<string, string> = {
   key: keyImg,
 };
 
-const rarityColors: Record<string, string> = {
-  common: "text-rarity-common",
-  rare: "text-rarity-rare",
-  epic: "text-rarity-epic",
-  legendary: "text-rarity-legendary",
-};
-
-const rarityLabels: Record<string, string> = {
-  common: "Zwykły",
-  rare: "Rzadki",
-  epic: "Epicki",
-  legendary: "Legendarny",
-};
-
 interface PurchaseModalProps {
+  activeModeName: string;
+  cartModeName?: string | null;
+  onAddToCart: (product: Product, quantity: number) => void;
   product: Product | null;
   onClose: () => void;
 }
 
-export default function PurchaseModal({ product, onClose }: PurchaseModalProps) {
-  const [nick, setNick] = useState("");
+export default function PurchaseModal({
+  activeModeName,
+  cartModeName,
+  onAddToCart,
+  product,
+  onClose,
+}: PurchaseModalProps) {
   const [quantity, setQuantity] = useState(1);
-  const [particles, setParticles] = useState<{ id: number; tx: number; ty: number }[]>([]);
-  const btnRef = useRef<HTMLButtonElement>(null);
-
-  const spawnParticles = useCallback(() => {
-    const newParticles = Array.from({ length: 8 }).map((_, i) => ({
-      id: Date.now() + i,
-      tx: (Math.random() - 0.5) * 120,
-      ty: -(Math.random() * 80 + 20),
-    }));
-    setParticles(newParticles);
-    setTimeout(() => setParticles([]), 700);
-  }, []);
-
-  const handlePurchase = () => {
-    if (!nick.trim()) return;
-    spawnParticles();
-    toast.success("Dodano do koszyka!", {
-      description: `${product?.name} × ${quantity}`,
-      duration: 3000,
-    });
-    setTimeout(onClose, 600);
-  };
 
   if (!product) return null;
+
+  const handleConfirm = () => {
+    onAddToCart(product, quantity);
+    toast.success("Dodano do koszyka", {
+      description: `${product.name} x ${quantity} dla trybu ${activeModeName}.`,
+      duration: 3000,
+    });
+    onClose();
+  };
 
   return (
     <AnimatePresence>
       <motion.div
-        key="backdrop"
+        key="purchase-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-md flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-md"
       >
         <motion.div
-          key="modal"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-card pixel-border rounded-lg w-full max-w-lg overflow-hidden"
+          key="purchase-modal"
+          initial={{ opacity: 0, y: 18, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 18, scale: 0.96 }}
+          transition={{ duration: 0.22 }}
+          onClick={(event) => event.stopPropagation()}
+          className="relative w-full max-w-2xl overflow-hidden rounded-[28px] border border-border/70 bg-card shadow-[0_28px_70px_-30px_rgba(15,23,42,0.32)]"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <h2 className="font-pixel text-sm text-primary">{product.name}</h2>
-              <span className={`text-[10px] font-pixel ${rarityColors[product.rarity]}`}>
-                [{rarityLabels[product.rarity]}]
-              </span>
-            </div>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl leading-none">
-              ✕
-            </button>
-          </div>
-
-          <div className="p-6 flex flex-col sm:flex-row gap-6">
-            {/* Left: Image */}
-            <div className="flex-shrink-0 flex items-center justify-center">
-              <motion.img
-                src={imageMap[product.image]}
-                alt={product.name}
-                className="w-32 h-32 object-contain pixel-art"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-            </div>
-
-            {/* Right: Details */}
-            <div className="flex-1 space-y-4">
-              {/* Top part: Description & Bonuses */}
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
-
-                {product.bonuses && product.bonuses.length > 0 && (
-                  <div className="bg-secondary/30 rounded-lg p-3.5 space-y-2 border border-border/40">
-                    <span className="text-[10px] font-pixel text-primary tracking-wider">ZAWARTOŚĆ PAKIETU</span>
-                    <ul className="space-y-1.5">
-                      {product.bonuses.map((bonus, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-foreground/90">
-                          <span className="text-primary mt-0.5 text-[10px]">✦</span>
-                          <span>{bonus}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+          <div className="grid lg:grid-cols-[230px_minmax(0,1fr)]">
+            <div className="border-b border-border/50 bg-[linear-gradient(180deg,#fffdf6_0%,#f9f1df_100%)] p-5 lg:border-b-0 lg:border-r">
+              <div className="flex items-start justify-between gap-3">
+                <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-pixel uppercase tracking-[0.16em] text-primary">
+                  Potwierdzenie
+                </span>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-white/70 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  ×
+                </button>
               </div>
 
-              {/* Price & Quantity flex */}
-              <div className="flex items-center justify-between py-2 border-y border-border/30 my-4">
-                <div>
-                  <label className="text-[10px] font-pixel text-muted-foreground uppercase mb-1 block">WYBIERZ ILOŚĆ</label>
-                  <div className="flex items-center gap-1 bg-secondary/50 rounded p-1 border border-border">
+              <div className="mt-5 flex items-center justify-center rounded-[24px] border border-amber-200 bg-white/90 p-4 shadow-inner">
+                <img src={imageMap[product.image]} alt={product.name} className="h-20 w-20 pixel-art" />
+              </div>
+
+              <div className="mt-4">
+                <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">Wybrany pakiet</p>
+                <h2 className="mt-2.5 text-xl font-semibold leading-tight text-foreground">
+                  {product.name}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  To jest tylko potwierdzenie dodania do koszyka.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5">
+              <div className="rounded-[22px] border border-[#d9c9a8] bg-[linear-gradient(180deg,#fffdf8_0%,#f8f0de_100%)] p-4 text-foreground shadow-[0_18px_34px_-28px_rgba(15,23,42,0.24)]">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                    <ShoppingCart className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
+                      Dodajesz do koszyka
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Koszyk obsluguje tylko jeden tryb naraz.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3">
+                    <p className="text-[10px] font-pixel uppercase tracking-[0.16em] text-primary">Tryb</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">{activeModeName}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3">
+                    <p className="text-[10px] font-pixel uppercase tracking-[0.16em] text-primary">Koszyk</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {cartModeName ?? "Zostanie przypisany po tym dodaniu"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-[170px_minmax(0,1fr)]">
+                <div className="rounded-[22px] border border-border/70 bg-background p-4">
+                  <label className="font-pixel text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Ilosc
+                  </label>
+                  <div className="mt-3 flex items-center justify-between rounded-2xl border border-border/70 bg-card p-2">
                     <button
+                      type="button"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-7 h-7 bg-background rounded text-foreground hover:bg-muted transition-colors flex items-center justify-center font-mono"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/70 bg-background text-lg font-semibold text-foreground"
                     >
                       -
                     </button>
-                    <span className="w-8 text-center font-bold text-sm font-mono">{quantity}</span>
+                    <span className="w-10 text-center text-lg font-bold text-foreground">{quantity}</span>
                     <button
+                      type="button"
                       onClick={() => setQuantity(quantity + 1)}
-                      className="w-7 h-7 bg-background rounded text-foreground hover:bg-muted transition-colors flex items-center justify-center font-mono"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/70 bg-background text-lg font-semibold text-foreground"
                     >
                       +
                     </button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-pixel text-muted-foreground uppercase mb-1 block">DO ZAPŁATY</span>
-                  <span className="text-2xl font-bold text-primary tracking-tight">
-                    {(product.price * quantity).toFixed(2)} <span className="text-sm text-primary/70">PLN</span>
-                  </span>
-                </div>
-              </div>
 
-              {/* Nick player input */}
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-2 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
-                <label className="text-[10px] font-pixel text-primary uppercase mb-2 block tracking-wider pl-2">KTO OTRZYMA PAKIET?</label>
-                <div className="relative pl-2">
-                  <input
-                    type="text"
-                    value={nick}
-                    onChange={(e) => setNick(e.target.value)}
-                    placeholder="Wpisz tutaj swój nick Minecraft"
-                    autoFocus
-                    className="w-full bg-background border-2 border-border text-foreground px-4 py-3 text-base rounded focus:border-primary focus:outline-none transition-all font-mono shadow-inner block"
-                  />
-                  {nick.length >= 3 && (
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald font-pixel text-sm drop-shadow">
-                      ✓
+                <div className="rounded-[22px] border border-border/70 bg-background p-4">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="font-pixel text-[10px] uppercase tracking-[0.16em]">
+                      Krotka informacja
                     </span>
-                  )}
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    Po dodaniu pakiet pojawi sie w koszyku przypisanym do tego trybu. Dane gracza i platnosc beda kolejnym krokiem.
+                  </p>
                 </div>
-                {nick.length > 0 && nick.length < 3 && (
-                  <p className="text-[10px] text-destructive mt-1.5 pl-2">Nick musi mieć co najmniej 3 znaki</p>
-                )}
               </div>
 
-              {/* Buy button */}
-              <div className="relative pt-2">
-                <button
-                  ref={btnRef}
-                  onClick={handlePurchase}
-                  disabled={nick.length < 3}
-                  className={`w-full py-4 font-bold rounded text-sm tracking-wider transition-all duration-300 ${nick.length >= 3
-                      ? "bg-primary text-primary-foreground pixel-border-gold glow-gold shadow-lg hover:brightness-110 translate-y-0"
-                      : "bg-muted text-muted-foreground cursor-not-allowed opacity-70"
-                    }`}
-                >
-                  <span className="font-pixel text-[12px]">{nick.length >= 3 ? "PRZEJDŹ DO PŁATNOŚCI" : "WPISZ NICK ABY KUPIĆ"}</span>
-                </button>
-
-                {/* Particles */}
-                {particles.map((p) => (
-                  <span
-                    key={p.id}
-                    className="absolute left-1/2 top-1/2 w-2 h-2 bg-primary rounded-sm particle pointer-events-none"
-                    style={{ "--tx": `${p.tx}px`, "--ty": `${p.ty}px` } as React.CSSProperties}
-                  />
-                ))}
+              <div className="mt-4 rounded-[22px] border border-border/70 bg-background p-4">
+                <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
+                  Podsumowanie
+                </p>
+                <div className="mt-4 flex flex-col gap-3 border-t border-border/50 pt-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Do zaplaty</p>
+                    <p className="mt-1 text-3xl font-bold tracking-tight text-primary">
+                      {(product.price * quantity).toFixed(2)}
+                      <span className="ml-1 text-sm font-semibold text-muted-foreground">PLN</span>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleConfirm}
+                    className="btn-premium rounded-xl px-5 py-3 text-sm font-bold tracking-wider text-primary-foreground"
+                  >
+                    <span className="font-pixel text-[11px]">DODAJ DO KOSZYKA</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

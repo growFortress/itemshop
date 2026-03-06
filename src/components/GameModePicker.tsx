@@ -1,32 +1,43 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { gameModes } from "@/data/shopData";
+import floatingIsland from "@/assets/floating-island.png";
+import swordImg from "@/assets/sword.png";
+import chestImg from "@/assets/chest.png";
+import keyImg from "@/assets/key.png";
+import crownImg from "@/assets/crown.png";
 
-const modeGradients: Record<string, string> = {
-  "og-lucky-skyblock": "from-cyan-400/20 to-cyan-500/5",
-  "survival-extreme": "from-red-400/20 to-orange-500/5",
-  "survival-dzialki": "from-green-400/20 to-emerald-500/5",
-  "oneblock": "from-blue-400/20 to-indigo-500/5",
-  "creative": "from-purple-400/20 to-fuchsia-500/5",
-  "box-pvp": "from-orange-400/20 to-amber-500/5",
-};
-
-const modeAccents: Record<string, string> = {
-  "og-lucky-skyblock": "border-cyan-400/50 shadow-cyan-400/20",
-  "survival-extreme": "border-red-400/50 shadow-red-400/20",
-  "survival-dzialki": "border-green-400/50 shadow-green-400/20",
-  "oneblock": "border-blue-400/50 shadow-blue-400/20",
-  "creative": "border-purple-400/50 shadow-purple-400/20",
-  "box-pvp": "border-orange-400/50 shadow-orange-400/20",
-};
-
-const modeTextColors: Record<string, string> = {
-  "og-lucky-skyblock": "text-cyan-600",
-  "survival-extreme": "text-red-500",
-  "survival-dzialki": "text-green-600",
-  "oneblock": "text-blue-500",
-  "creative": "text-purple-500",
-  "box-pvp": "text-orange-500",
+const modeCards: Record<string, { gradient: string; glow: string; image: string }> = {
+  "og-lucky-skyblock": {
+    gradient: "from-cyan-900 via-cyan-800/90 to-sky-950",
+    glow: "rgba(34,211,238,0.3)",
+    image: floatingIsland,
+  },
+  "survival-extreme": {
+    gradient: "from-red-900 via-orange-900/90 to-red-950",
+    glow: "rgba(248,113,113,0.3)",
+    image: swordImg,
+  },
+  "survival-dzialki": {
+    gradient: "from-green-900 via-emerald-800/90 to-green-950",
+    glow: "rgba(74,222,128,0.3)",
+    image: chestImg,
+  },
+  "oneblock": {
+    gradient: "from-blue-900 via-indigo-800/90 to-blue-950",
+    glow: "rgba(96,165,250,0.3)",
+    image: keyImg,
+  },
+  "creative": {
+    gradient: "from-purple-900 via-fuchsia-800/90 to-purple-950",
+    glow: "rgba(192,132,252,0.3)",
+    image: crownImg,
+  },
+  "box-pvp": {
+    gradient: "from-orange-900 via-amber-800/90 to-orange-950",
+    glow: "rgba(251,146,60,0.3)",
+    image: swordImg,
+  },
 };
 
 const container = {
@@ -34,15 +45,20 @@ const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.2
-    }
-  }
+      staggerChildren: 0.1,
+      delayChildren: 0.15,
+    },
+  },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 20, scale: 0.9 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring" as const, bounce: 0.35 } }
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring" as const, bounce: 0.25, duration: 0.6 },
+  },
 };
 
 interface GameModePickerProps {
@@ -53,144 +69,101 @@ export default function GameModePicker({ onSelect }: GameModePickerProps) {
   const [hoveredMode, setHoveredMode] = useState<string | null>(null);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="picker-backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto"
+    <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      {/* Header */}
+      <motion.h2
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="font-pixel text-sm text-primary/80 tracking-[0.25em] uppercase mb-6"
       >
-        <motion.div
-          key="picker-modal"
-          initial={{ scale: 0.8, opacity: 0, rotateX: 20 }}
-          animate={{ scale: 1, opacity: 1, rotateX: 0 }}
-          exit={{ scale: 0.8, opacity: 0, rotateX: 20 }}
-          transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
-          className="bg-card/95 backdrop-blur-md pixel-border rounded-2xl w-full max-w-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 relative"
-          style={{ perspective: "1000px" }}
-        >
-          {/* Animated Glow behind modal */}
-          {hoveredMode && (
-            <motion.div
-              layoutId="modal-glow"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.15 }}
-              className={`absolute inset-0 pointer-events-none bg-gradient-to-br ${modeGradients[hoveredMode]} blur-3xl`}
-              transition={{ duration: 0.4 }}
-            />
-          )}
+        TRYBY GRY
+      </motion.h2>
 
-          {/* Header Section */}
-          <div className="relative p-8 pb-4 text-center z-10">
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-6 border border-primary/20 shadow-inner"
+      {/* Card Grid */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
+        {gameModes.map((mode) => {
+          const card = modeCards[mode.id];
+          const isHovered = hoveredMode === mode.id;
+
+          return (
+            <motion.button
+              key={mode.id}
+              variants={item}
+              onClick={() => onSelect(mode.id)}
+              onMouseEnter={() => setHoveredMode(mode.id)}
+              onMouseLeave={() => setHoveredMode(null)}
+              whileTap={{ scale: 0.97 }}
+              className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <motion.span
-                className="text-4xl"
-                animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                ⚔️
-              </motion.span>
-            </motion.div>
-            
-            <motion.h2 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="font-pixel text-lg text-primary mb-3 tracking-widest uppercase"
-            >
-              NA JAKIM TRYBIE GRASZ?
-            </motion.h2>
-            
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-sm text-muted-foreground max-w-md mx-auto"
-            >
-              Wybierz swój główny tryb, abyśmy mogli dopasować ofertę do Twoich potrzeb. Pamiętaj, że zawsze możesz go zmienić w górnym menu.
-            </motion.p>
-          </div>
+              {/* Background gradient */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} transition-all duration-500`} />
 
-          {/* Mode Grid Section */}
-          <motion.div 
-            className="relative p-8 pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 z-10"
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            {gameModes.map((mode) => {
-              const isHovered = hoveredMode === mode.id;
-              return (
-                <motion.button
-                  key={mode.id}
-                  variants={item}
-                  onClick={() => onSelect(mode.id)}
-                  onMouseEnter={() => setHoveredMode(mode.id)}
-                  onMouseLeave={() => setHoveredMode(null)}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
-                    isHovered
-                      ? `bg-gradient-to-b ${modeGradients[mode.id]} ${modeAccents[mode.id]} border-opacity-100 shadow-xl`
-                      : "bg-secondary/20 border-border/50 hover:border-muted-foreground/30"
-                  }`}
-                >
-                  {/* Decorative corner element */}
-                  <div className="absolute top-0 right-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary/40 animate-ping" />
-                  </div>
+              {/* Ambient glow on hover */}
+              <motion.div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background: `radial-gradient(ellipse at 50% 40%, ${card.glow} 0%, transparent 70%)`,
+                }}
+              />
 
-                  {/* Icon */}
-                  <motion.span 
-                    className="text-4xl mb-4 relative z-10 drop-shadow-lg"
-                    animate={isHovered ? { scale: [1, 1.2, 1], rotate: [0, -5, 5, 0] } : {}}
-                    transition={{ duration: 0.5 }}
-                  >
-                    {mode.icon}
-                  </motion.span>
-
-                  {/* Name */}
-                  <span
-                    className={`font-pixel text-[11px] leading-tight text-center tracking-wider transition-all duration-300 relative z-10 ${
-                      isHovered ? modeTextColors[mode.id] : "text-foreground/80 group-hover:text-foreground"
-                    }`}
-                  >
-                    {mode.name}
-                  </span>
-
-                  {/* Active Indicator Bar */}
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: isHovered ? "40%" : "0%" }}
-                    className="absolute bottom-3 h-0.5 bg-primary/40 rounded-full"
+              {/* Decorative particles */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1 h-1 rounded-full bg-white/20"
+                    style={{
+                      left: `${15 + i * 14}%`,
+                      top: `${20 + (i * 17) % 50}%`,
+                      animation: `sparkle ${3 + i * 0.7}s ease-in-out infinite`,
+                      animationDelay: `${i * 0.4}s`,
+                    }}
                   />
-                </motion.button>
-              );
-            })}
-          </motion.div>
+                ))}
+              </div>
 
-          {/* Footer Section */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="relative px-8 pb-8 pt-2 z-10"
-          >
-            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex items-center justify-center gap-3">
-              <span className="text-lg">💡</span>
-              <p className="text-[11px] text-muted-foreground leading-snug">
-                Dobieramy pakiety i promocje specjalnie pod Twój ulubiony tryb rozgrywki.
-              </p>
-            </div>
-          </motion.div>
-        </motion.div>
+              {/* Mode image */}
+              <motion.img
+                src={card.image}
+                alt={mode.name}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[55%] w-28 h-28 sm:w-32 sm:h-32 object-contain pixel-art drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)] select-none pointer-events-none z-10"
+                animate={isHovered ? { scale: 1.12, y: "-58%" } : { scale: 1, y: "-55%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              />
+
+              {/* Bottom gradient overlay for text */}
+              <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-20" />
+
+              {/* Mode name */}
+              <div className="absolute inset-x-0 bottom-0 z-30 p-4 sm:p-5">
+                <motion.span
+                  className="font-pixel text-[11px] sm:text-xs text-white tracking-widest uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+                  animate={isHovered ? { letterSpacing: "0.2em" } : { letterSpacing: "0.15em" }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {mode.name}
+                </motion.span>
+              </div>
+
+              {/* Hover border glow */}
+              <motion.div
+                className="absolute inset-0 rounded-2xl pointer-events-none z-40"
+                animate={isHovered ? { opacity: 1 } : { opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  boxShadow: `inset 0 0 0 2px ${card.glow}, 0 0 30px ${card.glow}`,
+                }}
+              />
+            </motion.button>
+          );
+        })}
       </motion.div>
-    </AnimatePresence>
+    </section>
   );
 }

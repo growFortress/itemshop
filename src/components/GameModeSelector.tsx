@@ -1,109 +1,219 @@
 import { motion } from "framer-motion";
 import { gameModes } from "@/data/shopData";
+import floatingIsland from "@/assets/floating-island.png";
+import swordImg from "@/assets/sword.png";
+import chestImg from "@/assets/chest.png";
+import keyImg from "@/assets/key.png";
+import crownImg from "@/assets/crown.png";
 
 interface GameModeSelectorProps {
   activeMode: string;
+  cartItems: number;
+  cartModeName?: string | null;
   onModeChange: (id: string) => void;
+  onOpenCart: () => void;
 }
 
-const modeGradients: Record<string, string> = {
-  "og-lucky-skyblock": "from-cyan-400/15 to-cyan-500/5",
-  "survival-extreme": "from-red-400/15 to-orange-500/5",
-  "survival-dzialki": "from-green-400/15 to-emerald-500/5",
-  "oneblock": "from-blue-400/15 to-indigo-500/5",
-  "creative": "from-purple-400/15 to-fuchsia-500/5",
-  "box-pvp": "from-orange-400/15 to-amber-500/5",
+const modeImages: Record<string, string> = {
+  "og-lucky-skyblock": floatingIsland,
+  "survival-extreme": swordImg,
+  "survival-dzialki": chestImg,
+  oneblock: keyImg,
+  creative: crownImg,
+  "box-pvp": swordImg,
 };
 
-const modeAccents: Record<string, string> = {
-  "og-lucky-skyblock": "shadow-cyan-400/25 border-cyan-400/40",
-  "survival-extreme": "shadow-red-400/25 border-red-400/40",
-  "survival-dzialki": "shadow-green-400/25 border-green-400/40",
-  "oneblock": "shadow-blue-400/25 border-blue-400/40",
-  "creative": "shadow-purple-400/25 border-purple-400/40",
-  "box-pvp": "shadow-orange-400/25 border-orange-400/40",
-};
-
-const modeTextActive: Record<string, string> = {
-  "og-lucky-skyblock": "text-cyan-600",
-  "survival-extreme": "text-red-500",
-  "survival-dzialki": "text-green-600",
-  "oneblock": "text-blue-500",
-  "creative": "text-purple-500",
-  "box-pvp": "text-orange-500",
-};
-
-const container = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.04 },
+const modeTone: Record<
+  string,
+  {
+    border: string;
+    shadow: string;
+    accent: string;
+    iconBg: string;
+    badge: string;
+  }
+> = {
+  "og-lucky-skyblock": {
+    border: "border-[#67d8ee]",
+    shadow: "shadow-[0_8px_0_0_rgba(30,163,193,0.28)]",
+    accent: "from-[#67d8ee] to-[#12b9db]",
+    iconBg: "bg-[#e6fbff]",
+    badge: "bg-[#67d8ee] text-[#08313d]",
+  },
+  "survival-extreme": {
+    border: "border-[#ff9db6]",
+    shadow: "shadow-[0_8px_0_0_rgba(235,78,121,0.24)]",
+    accent: "from-[#ff9db6] to-[#ff5e87]",
+    iconBg: "bg-[#fff0f4]",
+    badge: "bg-[#ff7a9f] text-[#43111d]",
+  },
+  "survival-dzialki": {
+    border: "border-[#9fdcab]",
+    shadow: "shadow-[0_8px_0_0_rgba(76,178,95,0.24)]",
+    accent: "from-[#9fdcab] to-[#5cc878]",
+    iconBg: "bg-[#f1fff4]",
+    badge: "bg-[#7ad38d] text-[#112f18]",
+  },
+  oneblock: {
+    border: "border-[#9ec5ff]",
+    shadow: "shadow-[0_8px_0_0_rgba(74,132,237,0.22)]",
+    accent: "from-[#9ec5ff] to-[#4f8fff]",
+    iconBg: "bg-[#eff6ff]",
+    badge: "bg-[#8cb7ff] text-[#132a4c]",
+  },
+  creative: {
+    border: "border-[#cdb8ff]",
+    shadow: "shadow-[0_8px_0_0_rgba(145,95,240,0.22)]",
+    accent: "from-[#cdb8ff] to-[#9668ff]",
+    iconBg: "bg-[#f7f1ff]",
+    badge: "bg-[#c0a2ff] text-[#281148]",
+  },
+  "box-pvp": {
+    border: "border-[#f8c188]",
+    shadow: "shadow-[0_8px_0_0_rgba(237,140,48,0.24)]",
+    accent: "from-[#ffd09a] to-[#ff9734]",
+    iconBg: "bg-[#fff5e9]",
+    badge: "bg-[#ffbe74] text-[#452207]",
   },
 };
 
-const item = {
-  hidden: { opacity: 0, y: 12, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring" as const, bounce: 0.3, duration: 0.5 } },
-};
+export default function GameModeSelector({
+  activeMode,
+  cartItems,
+  cartModeName,
+  onModeChange,
+  onOpenCart,
+}: GameModeSelectorProps) {
+  const activeModeName = gameModes.find((mode) => mode.id === activeMode)?.name ?? "Wybrany tryb";
+  const cartHeadline = cartItems === 1 ? "1 pakiet w koszyku" : `${cartItems} szt. w koszyku`;
 
-export default function GameModeSelector({ activeMode, onModeChange }: GameModeSelectorProps) {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-5">
-      <h2 className="text-[10px] font-pixel text-muted-foreground mb-3 tracking-[0.2em] uppercase">
-        Wybierz tryb
-      </h2>
-      <motion.div
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2"
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
-        {gameModes.map((mode) => {
-          const isActive = activeMode === mode.id;
-          return (
-            <motion.button
-              key={mode.id}
-              variants={item}
-              onClick={() => onModeChange(mode.id)}
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className={`relative flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
-                isActive
-                  ? `bg-gradient-to-b ${modeGradients[mode.id]} border-opacity-100 ${modeAccents[mode.id]} shadow-md`
-                  : "bg-card border-border hover:border-muted-foreground/20 hover:shadow-sm"
-              }`}
-            >
-              {/* Icon with bounce on active */}
-              <motion.span
-                className="text-2xl leading-none"
-                animate={isActive ? { scale: [1, 1.2, 1], rotate: [0, -5, 5, 0] } : {}}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                {mode.icon}
-              </motion.span>
+    <div className="mx-auto max-w-6xl px-4 py-5">
+      <div className="rounded-[28px] border-[3px] border-[#d8cfbf] bg-[#fffaf0] px-5 py-5 shadow-[0_8px_0_0_#d8cfbf] sm:px-6">
+        <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="rounded-[24px] border-[3px] border-[#e1d7c7] bg-white px-4 py-4 shadow-[0_6px_0_0_#e1d7c7]">
+            <p className="font-pixel text-[10px] uppercase tracking-[0.18em] text-primary">
+              Aktualny serwer
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="rounded-full border-2 border-[#8c5a12] bg-[#f7d04e] px-3 py-1 font-pixel text-[10px] uppercase tracking-[0.16em] text-[#342203] shadow-[0_3px_0_0_#8c5a12]">
+                Aktywny tryb
+              </span>
+              <span className="rounded-full border-2 border-[#e6ddcf] bg-[#fffaf0] px-3 py-1 text-xs font-semibold text-[#5f543d]">
+                {activeModeName}
+              </span>
+            </div>
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Wszystkie plansze i pakiety ponizej naleza do tego trybu. Jesli szukasz innego
+              serwera, zmien go na kaflach nizej.
+            </p>
+          </div>
 
-              <span
-                className={`text-[10px] font-pixel leading-tight text-center transition-colors duration-200 ${
-                  isActive
-                    ? modeTextActive[mode.id]
-                    : "text-muted-foreground"
+          <div className="rounded-[24px] border-[3px] border-[#e1d7c7] bg-[linear-gradient(180deg,#fff8e7_0%,#fff2cb_100%)] px-4 py-4 shadow-[0_6px_0_0_#e1d7c7]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-pixel text-[10px] uppercase tracking-[0.18em] text-primary">
+                  Twoj koszyk
+                </p>
+                <p className="mt-3 text-lg font-black text-foreground">
+                  {cartItems > 0 ? cartHeadline : "Koszyk jest pusty"}
+                </p>
+              </div>
+
+              <div className="rounded-full border-2 border-[#e1d7c7] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f543d] shadow-[0_3px_0_0_#e1d7c7]">
+                1 koszyk = 1 tryb
+              </div>
+            </div>
+
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {cartItems > 0 && cartModeName
+                ? `Masz juz wybrane pakiety dla trybu ${cartModeName}. Otworz koszyk i przejdz dalej albo dobierz kolejne rzeczy z tej samej planszy.`
+                : "Najpierw kliknij kategorie albo konkretny pakiet. Po dodaniu produktu od razu zobaczysz go w koszyku."}
+            </p>
+
+            {cartItems > 0 ? (
+              <button
+                type="button"
+                onClick={onOpenCart}
+                className="mt-4 inline-flex items-center justify-center rounded-[16px] border-2 border-[#8c5a12] bg-[#f7d04e] px-4 py-3 font-pixel text-[11px] uppercase tracking-[0.14em] text-[#342203] shadow-[0_4px_0_0_#8c5a12] transition-transform hover:translate-y-[-1px]"
+              >
+                Otworz koszyk
+              </button>
+            ) : (
+              <div className="mt-4 inline-flex rounded-[16px] border-2 border-[#e1d7c7] bg-white px-4 py-3 text-sm font-medium text-[#5f543d]">
+                Krok 1: wybierz plansze albo pakiet nizej
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-pixel text-[10px] uppercase tracking-[0.18em] text-primary">
+              Zmien serwer
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Gdy grasz na innym trybie, kliknij odpowiedni kafel. Zmiana przelacza cala oferte sklepu.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+          {gameModes.map((mode, index) => {
+            const active = activeMode === mode.id;
+            const tone = modeTone[mode.id];
+
+            return (
+              <motion.button
+                key={mode.id}
+                type="button"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => onModeChange(mode.id)}
+                aria-pressed={active}
+                className={`group relative overflow-hidden rounded-[24px] border-[3px] bg-white text-left transition-all ${tone.border} ${
+                  active ? `${tone.shadow} translate-y-[-2px]` : "shadow-[0_6px_0_0_rgba(216,207,191,0.9)] hover:border-[#c9beaa]"
                 }`}
               >
-                {mode.name}
-              </span>
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:18px_18px] opacity-40" />
 
-              {/* Active indicator dot */}
-              {isActive && (
-                <motion.div
-                  layoutId="mode-dot"
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-current"
-                  style={{ color: "inherit" }}
-                  transition={{ type: "spring", bounce: 0.35, duration: 0.4 }}
-                />
-              )}
-            </motion.button>
-          );
-        })}
-      </motion.div>
+                <div className="relative p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-white ${tone.iconBg}`}>
+                      <img
+                        src={modeImages[mode.id]}
+                        alt={mode.name}
+                        className="h-7 w-7 pixel-art transition-transform duration-200 group-hover:scale-105"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-pixel text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+                          Tryb
+                        </span>
+                        {active && (
+                          <span className={`rounded-full px-2 py-1 font-pixel text-[9px] uppercase tracking-[0.16em] shadow-[0_2px_0_0_rgba(0,0,0,0.12)] ${tone.badge}`}>
+                            Teraz tutaj
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 truncate text-base font-bold leading-snug text-foreground">
+                        {mode.name}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`h-1.5 w-full bg-gradient-to-r ${tone.accent}`} />
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
