@@ -8,11 +8,8 @@ import {
 } from "@/types/storefront";
 import { createCheckoutDraftData, createOrderData, getStorefrontData } from "@/lib/storefrontService";
 
-const allowLocalPreviewFallback =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname);
-const useDirectLocalPreviewFallback =
-  allowLocalPreviewFallback && import.meta.env.DEV;
+const allowLocalPreviewFallback = true;
+const useDirectLocalPreviewFallback = true;
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
