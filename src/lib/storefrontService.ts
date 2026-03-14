@@ -14,7 +14,7 @@ const nicknamePattern = "^[^\\s]{1,16}$";
 const paymentProvider = "Cashbill" as const;
 
 function uniqueProductTypes(modeId: string) {
-  return [...new Set(products.filter((product) => product.gameMode === modeId).map((product) => product.type))];
+  return Array.from(new Set(products.filter((product) => product.gameMode === modeId).map((product) => product.type)));
 }
 
 function mapMode(modeId: string): StorefrontModeDto {

@@ -1,4 +1,4 @@
-import type { GameMode, PaymentLink, Product } from "@/data/shopData";
+import type { GameMode, PaymentLink, Product } from "../data/shopData";
 
 export const storefrontApiRoutes = {
   storefront: "/api/storefront",

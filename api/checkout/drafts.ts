@@ -13,7 +13,7 @@ export default async function handler(req: ApiRequestLike, res: ApiResponseLike)
   }
 
   try {
-    res.status(200).json(createCheckoutDraftData(req.body, { status: "preview" }));
+    res.status(200).json(createCheckoutDraftData(req.body as any, { status: "preview" }));
   } catch (error) {
     res.status(422).json({
       message: error instanceof Error ? error.message : "Unable to create checkout draft.",
