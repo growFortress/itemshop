@@ -6,8 +6,9 @@ export interface CartItem {
   quantity: number;
 }
 
-interface AddItemResult {
-  status: "added" | "mode-mismatch";
+export interface AddItemResult {
+  status: "added" | "already-in-cart" | "mode-mismatch" | "rank-conflict";
+  conflictingProduct?: Product;
 }
 
 export function useCart() {
@@ -20,25 +21,32 @@ export function useCart() {
     }
   }, [items, modeId]);
 
-  const addItem = useCallback((product: Product, quantity = 1, targetModeId?: string): AddItemResult => {
+  const addItem = useCallback((product: Product, _quantity = 1, targetModeId?: string): AddItemResult => {
     const nextModeId = targetModeId ?? product.gameMode;
 
     if (modeId && modeId !== nextModeId && items.length > 0) {
       return { status: "mode-mismatch" };
     }
 
-    setModeId(nextModeId);
-    setItems((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + quantity } : i
-        );
+    const existing = items.find((item) => item.product.id === product.id);
+    if (existing) {
+      return { status: "already-in-cart" };
+    }
+
+    if (product.type === "rank") {
+      const conflictingRank = items.find((item) => item.product.type === "rank");
+      if (conflictingRank) {
+        return {
+          status: "rank-conflict",
+          conflictingProduct: conflictingRank.product,
+        };
       }
-      return [...prev, { product, quantity }];
-    });
+    }
+
+    setModeId(nextModeId);
+    setItems((prev) => [...prev, { product, quantity: 1 }]);
     return { status: "added" };
-  }, [items.length, modeId]);
+  }, [items, modeId]);
 
   const removeItem = useCallback((productId: string) => {
     setItems((prev) => prev.filter((i) => i.product.id !== productId));
@@ -55,7 +63,7 @@ export function useCart() {
           return [];
         }
 
-        return [{ ...item, quantity }];
+        return [{ ...item, quantity: 1 }];
       })
     );
   }, []);

@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
-import { Plus, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 import { Product } from "@/data/shopData";
 import chestImg from "@/assets/chest.png";
 import swordImg from "@/assets/sword.png";
 import crownImg from "@/assets/crown.png";
 import keyImg from "@/assets/key.png";
+import { ShopBadge } from "@/components/ui/shop-badge";
+import { ShopButton } from "@/components/ui/shop-button";
 
 const imageMap: Record<string, string> = {
   vip: crownImg,
@@ -22,93 +24,135 @@ const productTypeLabel: Record<Product["type"], string> = {
   rank: "Ranga",
   key: "Klucz",
   chest: "Skrzynia",
-  set: "Bundle",
+  set: "Zestaw",
   other: "Dodatek",
 };
 
-const rarityLabel: Record<Product["rarity"], string> = {
-  common: "Starter",
-  rare: "Rare",
-  epic: "Epic",
-  legendary: "Legend",
+const typePriceSurface: Record<Product["type"], string> = {
+  rank: "border-[#ecdcb8] bg-[#fffaf0]",
+  key: "border-[#d8e8f2] bg-[#fbfdff]",
+  chest: "border-[#ead9c1] bg-[#fff9f1]",
+  set: "border-[#d9e6cc] bg-[#fbfff8]",
+  other: "border-[#e0d8f4] bg-[#fcfbff]",
 };
 
-const rarityClassName: Record<Product["rarity"], string> = {
-  common: "border-[#ddd4c3] bg-[#f7f1e5] text-[#685a42]",
-  rare: "border-[#b9d8ff] bg-[#eef7ff] text-[#21598d]",
-  epic: "border-[#d9c0ff] bg-[#f5eeff] text-[#6c3fab]",
-  legendary: "border-[#ffd375] bg-[#fff0c4] text-[#8a5307]",
+const typePosterArt: Record<Product["type"], string> = {
+  rank: "/kategorie/rangi.png",
+  key: "/kategorie/klucze.png",
+  chest: "/kategorie/skrzynie.png",
+  set: "/kategorie/zestawy.png",
+  other: "/kategorie/dodatki.png",
 };
 
-const badgeLabel: Record<NonNullable<Product["badge"]>, string> = {
-  hot: "HOT",
-  new: "NOWE",
-  sale: "VALUE",
+const typePosterSurface: Record<Product["type"], string> = {
+  rank: "from-[#ff5b73] via-[#d61d50] to-[#6f1738]",
+  key: "from-[#35d7ff] via-[#1d8ee1] to-[#24436f]",
+  chest: "from-[#ffca6c] via-[#d68436] to-[#6b2c23]",
+  set: "from-[#8bd562] via-[#4da451] to-[#295846]",
+  other: "from-[#9f88ff] via-[#6956df] to-[#2f2a6a]",
 };
 
-const badgeClassName: Record<NonNullable<Product["badge"]>, string> = {
-  hot: "border-[#7a2127] bg-[#c73242] text-white",
-  new: "border-[#2f5f96] bg-[#4b8fd8] text-white",
-  sale: "border-[#8c5a12] bg-[#ebad27] text-[#322103]",
-};
+type ProductSignalTone = "popular" | "premium" | "value" | "new";
 
-function getProductSummary(product: Product) {
-  if (product.description !== "Produkt Crafted.pl") {
-    return product.description;
+function getProductSignal(product: Product): { label: string; tone: ProductSignalTone } | null {
+  if (product.badge === "sale") {
+    return { label: "Best value", tone: "value" };
   }
 
-  switch (product.type) {
-    case "rank":
-      return "Bonusy premium, lepszy start i wygodniejsze granie.";
-    case "key":
-      return "Szybki dostep do dropu, skrzyn i losowan.";
-    case "chest":
-      return "Otwarcia skrzyn i eventowe paczki dla tego trybu.";
-    case "set":
-      return "Duze pakiety z najlepszym value dla aktywnych graczy.";
-    case "other":
-      return "Specjalne dodatki, przedmioty i szybkie boosty.";
-    default:
-      return "Oferta Crafted.pl dla aktualnego trybu gry.";
+  if (product.badge === "new") {
+    return { label: "Nowosc", tone: "new" };
   }
+
+  if (product.popular || product.badge === "hot") {
+    return { label: "Popularny", tone: "popular" };
+  }
+
+  if (product.rarity === "legendary") {
+    return { label: "Premium", tone: "premium" };
+  }
+
+  return null;
 }
 
-function getProductHighlights(product: Product) {
-  if (product.bonuses?.length) {
-    return product.bonuses.slice(0, 2);
+const signalStyles: Record<ProductSignalTone, { badge: string; priceBox: string }> = {
+  popular: {
+    badge: "border-[#ffe08a]/35 bg-[#fff1b9]/14 text-[#fff4d3]",
+    priceBox: "border-primary/22 bg-[#fff9ec]",
+  },
+  premium: {
+    badge: "border-[#ffd8a0]/30 bg-[#fff0d5]/14 text-[#fff4e4]",
+    priceBox: "border-[#eadcb8] bg-[#fffaf0]",
+  },
+  value: {
+    badge: "border-[#f7d1a6]/32 bg-[#fff2dc]/14 text-[#fff4e2]",
+    priceBox: "border-[#ead6bc] bg-[#fff8ef]",
+  },
+  new: {
+    badge: "border-[#d2ffd7]/32 bg-[#effff1]/14 text-[#f2fff3]",
+    priceBox: "border-[#d5eadf] bg-[#f7fcf9]",
+  },
+};
+
+function getDisplaySubtitle(product: Product) {
+  const subtitle = product.subtitle?.trim();
+
+  if (!subtitle) {
+    return null;
   }
 
-  switch (product.type) {
-    case "rank":
-      return ["Lepsze komendy", "Premium status"];
-    case "key":
-      return ["Szybkie otwarcie", "Losowy drop"];
-    case "chest":
-      return ["Skrzynie serwerowe", "Losowe nagrody"];
-    case "set":
-      return ["Najlepszy value pack", "Wiele bonusow naraz"];
-    case "other":
-      return ["Specjalny dodatek", "Dziala od razu"];
-    default:
-      return ["Oferta serwerowa", "Kupujesz online"];
+  if (/^[*★☆]+$/u.test(subtitle)) {
+    return null;
   }
+
+  return subtitle;
+}
+
+function cleanTeaserLine(line: string) {
+  const cleaned = line
+    .replace(/^w pakiecie dostaniesz:?/i, "")
+    .replace(/^w tym pakiecie dostaniesz:?/i, "")
+    .replace(/^lista przedmiotow:?/i, "")
+    .replace(/^w mysteryboxie znajdziesz:?/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned || null;
+}
+
+function getCardTeaser(product: Product) {
+  const teaser = [
+    ...product.previewLines,
+    ...product.details,
+    product.description,
+  ]
+    .map((line) => cleanTeaserLine(line))
+    .find((line) => Boolean(line));
+
+  return teaser ?? product.description;
 }
 
 interface ProductCardProps {
   product: Product;
   index: number;
+  cartEnabled?: boolean;
   quantityInCart?: number;
-  onAddToCart: (product: Product) => void;
+  onOpenProduct: (product: Product) => void;
+  onBuyNow: (product: Product) => void;
 }
 
 export default function ProductCard({
   product,
   index,
+  cartEnabled = true,
   quantityInCart = 0,
-  onAddToCart,
+  onOpenProduct,
+  onBuyNow,
 }: ProductCardProps) {
-  const highlights = getProductHighlights(product);
-  const isInCart = quantityInCart > 0;
+  const subtitle = getDisplaySubtitle(product);
+  const isInCart = cartEnabled && quantityInCart > 0;
+  const signal = getProductSignal(product);
+  const signalStyle = signal ? signalStyles[signal.tone] : null;
+  const teaser = getCardTeaser(product);
 
   return (
     <motion.article
@@ -119,111 +163,88 @@ export default function ProductCard({
       className="group h-full"
     >
       <div
-        className={`flex h-full flex-col overflow-hidden rounded-[28px] border-[3px] bg-[#fffaf0] transition-shadow duration-200 hover:shadow-[0_8px_0_0_#d8cfbf,0_24px_36px_-22px_rgba(45,33,5,0.42)] ${
-          isInCart
-            ? "border-[#f2c94c] shadow-[0_8px_0_0_#c79112,0_18px_28px_-22px_rgba(45,33,5,0.34)]"
-            : "border-[#d8cfbf] shadow-[0_8px_0_0_#d8cfbf,0_18px_28px_-22px_rgba(45,33,5,0.34)]"
-        }`}
+        className={`panel-soft relative flex h-full flex-col overflow-hidden rounded-[28px] border transition-all duration-200 ${isInCart
+          ? "border-primary/35 ring-2 ring-primary/25 shadow-[0_24px_44px_-30px_rgba(122,87,20,0.32)]"
+          : "border-[#d4be97] shadow-[0_22px_40px_-30px_rgba(15,23,42,0.22)] hover:-translate-y-0.5 hover:shadow-[0_26px_46px_-30px_rgba(15,23,42,0.26)]"
+          }`}
       >
-        <div className="relative overflow-hidden border-b-[3px] border-[#eadfcb] bg-[linear-gradient(180deg,#fffdf7_0%,#f7edd7_100%)] px-4 py-4">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:18px_18px] opacity-40" />
-          <div className="relative flex items-start justify-between gap-3">
-            <span className="rounded-full border-2 border-[#d8cfbf] bg-white px-3 py-1 font-pixel text-[10px] uppercase tracking-[0.14em] text-[#50452e]">
-              {productTypeLabel[product.type]}
-            </span>
+        <div
+          className={`relative overflow-hidden rounded-[24px] border border-white/12 bg-gradient-to-br px-5 pb-6 pt-4 ${typePosterSurface[product.type]}`}
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.07)_0_8%,transparent_8%_16%),linear-gradient(180deg,rgba(255,255,255,0.05)_0_10%,transparent_10%_20%)] opacity-20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.28),transparent_34%),linear-gradient(180deg,rgba(18,8,12,0)_0%,rgba(18,8,12,0.14)_38%,rgba(18,8,12,0.72)_100%)]" />
+          <img
+            src={typePosterArt[product.type]}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-24 mix-blend-screen transition-transform duration-300 group-hover:scale-[1.08]"
+          />
 
-            <div className="flex items-center gap-2">
-              <span className={`rounded-full border-2 px-2.5 py-1 text-[10px] font-bold uppercase ${rarityClassName[product.rarity]}`}>
-                {rarityLabel[product.rarity]}
-              </span>
-              {product.badge && (
-                <span className={`rounded-full border-2 px-2.5 py-1 text-[10px] font-bold uppercase ${badgeClassName[product.badge]}`}>
-                  {badgeLabel[product.badge]}
-                </span>
-              )}
-              {isInCart && (
-                <span className="rounded-full border-2 border-[#8c5a12] bg-[#f7d04e] px-2.5 py-1 text-[10px] font-bold uppercase text-[#3b2903] shadow-[0_3px_0_0_#8c5a12]">
-                  W koszyku x{quantityInCart}
-                </span>
-              )}
+          <div className="relative z-10 flex min-h-[220px] flex-col">
+            <div className="flex items-start justify-between gap-3">
+              <ShopBadge tone="neutral">
+                {productTypeLabel[product.type]}
+              </ShopBadge>
             </div>
-          </div>
 
-          <div className="relative mt-4 flex min-h-[160px] items-center justify-center rounded-[24px] border-[3px] border-[#e4dac8] bg-[linear-gradient(180deg,#fffdf9_0%,#f1e8d4_100%)] p-4">
-            <div className="absolute inset-3 rounded-[18px] border border-white/65" />
-            <img
-              src={imageMap[product.image]}
-              alt={product.name}
-              className="relative z-10 h-24 w-24 pixel-art drop-shadow-[0_8px_10px_rgba(0,0,0,0.16)] transition-transform duration-300 group-hover:scale-105"
-            />
+            <div className="mt-auto">
+              {subtitle ? (
+                <p className="font-pixel text-[10px] uppercase tracking-[0.14em] text-white/70">
+                  {subtitle}
+                </p>
+              ) : null}
+              <h3 className="mt-3 text-[1.38rem] font-black leading-[1.04] text-white [text-shadow:0_2px_0_rgba(49,17,27,0.45)]">
+                {product.name}
+              </h3>
+            </div>
           </div>
         </div>
 
-        <div className="flex h-full flex-col p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-xl font-bold leading-tight text-foreground">
-                {product.name}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {getProductSummary(product)}
-              </p>
-            </div>
-            {product.popular && (
-              <span className="inline-flex items-center gap-1 rounded-full border-2 border-[#8c5a12] bg-[#f7d04e] px-2.5 py-1 text-[10px] font-bold uppercase text-[#3b2903] shadow-[0_3px_0_0_#8c5a12]">
-                <Sparkles className="h-3 w-3" />
-                Top
-              </span>
-            )}
+        <div className="flex flex-col px-5 py-4">
+          <div className="rounded-[18px] border border-[#d7c29c] bg-[#fff4df] px-4 py-3 text-sm leading-relaxed text-[#5b5146] shadow-[inset_0_1px_0_rgba(255,255,255,0.54)]">
+            {teaser}
           </div>
 
-          <div className="mt-4 grid gap-2">
-            {highlights.map((highlight) => (
-              <div
-                key={highlight}
-                className="inline-flex items-center gap-2 rounded-2xl border border-[#e6ddcf] bg-[#fffdf7] px-3 py-2 text-sm text-[#564b36]"
-              >
-                <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
-                <span>{highlight}</span>
-              </div>
-            ))}
-          </div>
-
-          {isInCart && (
-            <div className="mt-4 rounded-[18px] border-2 border-[#f1d17b] bg-[#fff4cf] px-3 py-3 text-sm font-medium text-[#6b5012]">
-              Ten pakiet jest juz w koszyku. Mozesz dodac kolejna sztuke albo przejsc dalej.
-            </div>
-          )}
-
-          <div className="mt-auto border-t border-[#e6ddcf] pt-4">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                  Cena
-                </p>
-                <p className="mt-2 text-[2rem] font-black leading-none text-[#18223c]">
-                  {product.price.toFixed(2)}
-                  <span className="ml-1 text-sm font-bold text-muted-foreground">PLN</span>
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onAddToCart(product)}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border-2 border-[#8c5a12] bg-[#f7d04e] text-[#3b2903] shadow-[0_4px_0_0_#8c5a12] transition-transform hover:translate-y-[-1px]"
-                aria-label={`${isInCart ? "Dodaj kolejna sztuke" : "Dodaj"} ${product.name} do koszyka`}
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onAddToCart(product)}
-              className="mt-4 w-full rounded-[18px] border-2 border-[#8c5a12] bg-[linear-gradient(180deg,#ffd65a_0%,#f4b51f_100%)] px-4 py-3 text-center font-pixel text-[11px] uppercase tracking-[0.16em] text-[#342203] shadow-[0_5px_0_0_#8c5a12] transition-transform hover:translate-y-[-1px]"
+          <div className="mt-4">
+            <div
+              className={`rounded-[22px] border p-4 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.18)] ${signalStyle ? signalStyle.priceBox : typePriceSurface[product.type]
+                }`}
             >
-              {isInCart ? "Dodaj kolejna sztuke" : "Dodaj do koszyka"}
-            </button>
+              <div className="flex items-end gap-3">
+                <div>
+                  <p className="font-pixel text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    Cena
+                  </p>
+                  <p className="mt-2 text-[2rem] font-black leading-none text-[#18223c]">
+                    {product.price.toFixed(2)}
+                    <span className="ml-1 text-sm font-bold text-muted-foreground">PLN</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                <ShopButton
+                  variant="primary"
+                  size="md"
+                  className="w-full"
+                  onClick={() => onOpenProduct(product)}
+                  aria-label={`Pokaz szczegoly produktu ${product.name}`}
+                >
+                  Szczegoly produktu
+                  <ArrowRight className="h-4 w-4" />
+                </ShopButton>
+
+                <ShopButton
+                  variant="secondary"
+                  size="md"
+                  className="w-full"
+                  onClick={() => onBuyNow(product)}
+                  aria-label={`Kup teraz produkt ${product.name}`}
+                >
+                  Kup teraz
+                  <ShoppingBag className="h-4 w-4" />
+                </ShopButton>
+              </div>
+            </div>
           </div>
         </div>
       </div>

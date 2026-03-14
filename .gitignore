@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary & output directories
+tmp/
+output/
+docs/
+backend/
+
+# Root-level screenshots
+/*.png

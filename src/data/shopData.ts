@@ -1,3 +1,21 @@
+import { craftedCatalog } from "./craftedCatalog.generated";
+
+export interface PaymentLink {
+  label: string;
+  href: string;
+}
+
+export interface PaymentOption {
+  id: string;
+  label: string;
+  price: number | null;
+  note: string;
+  buttonLabel: string;
+  nicknamePlaceholder: string;
+  legalText: string;
+  legalLinks: PaymentLink[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -11,13 +29,29 @@ export interface Product {
   badge?: "hot" | "new" | "sale";
   bonuses?: string[];
   sortPriority?: number;
+  subtitle: string;
+  previewLines: string[];
+  details: string[];
+  lowestPriceLabel: string | null;
+  lowestPriceLines: string[];
+  paymentOptions: PaymentOption[];
+  sourcePageUrl: string | null;
+  sourceServiceId: string;
 }
 
 export interface GameMode {
   id: string;
   name: string;
+  shortName: string;
   icon: string;
   color: string;
+  storefrontTitle: string;
+  storefrontUrl: string;
+  sourceServer: string;
+  regulationsUrl: string;
+  privacyUrl: string;
+  contactUrl: string;
+  supportEmail: string;
 }
 
 export interface RankPerk {
@@ -31,12 +65,90 @@ export interface RankDefinition {
 }
 
 export const gameModes: GameMode[] = [
-  { id: "og-lucky-skyblock", name: "OG Lucky SkyBlock", icon: "island", color: "cyan" },
-  { id: "survival-extreme", name: "Survival Extreme", icon: "sword", color: "rose" },
-  { id: "survival-dzialki", name: "Survival Dzialki", icon: "chest", color: "emerald" },
-  { id: "oneblock", name: "OneBlock", icon: "key", color: "blue" },
-  { id: "creative", name: "Creative", icon: "crown", color: "violet" },
-  { id: "box-pvp", name: "BoxPvP", icon: "sword", color: "orange" },
+  {
+    id: "og-lucky-skyblock",
+    name: "OG Lucky SkyBlock",
+    shortName: "OG",
+    icon: "island",
+    color: "cyan",
+    storefrontTitle: craftedCatalog.modes["og-lucky-skyblock"].title,
+    storefrontUrl: craftedCatalog.modes["og-lucky-skyblock"].pageUrl,
+    sourceServer: craftedCatalog.modes["og-lucky-skyblock"].server,
+    regulationsUrl: craftedCatalog.modes["og-lucky-skyblock"].regulationsUrl,
+    privacyUrl: craftedCatalog.modes["og-lucky-skyblock"].privacyUrl,
+    contactUrl: craftedCatalog.modes["og-lucky-skyblock"].contactUrl,
+    supportEmail: craftedCatalog.modes["og-lucky-skyblock"].email,
+  },
+  {
+    id: "survival-extreme",
+    name: "Survival Extreme",
+    shortName: "EXT",
+    icon: "sword",
+    color: "rose",
+    storefrontTitle: craftedCatalog.modes["survival-extreme"].title,
+    storefrontUrl: craftedCatalog.modes["survival-extreme"].pageUrl,
+    sourceServer: craftedCatalog.modes["survival-extreme"].server,
+    regulationsUrl: craftedCatalog.modes["survival-extreme"].regulationsUrl,
+    privacyUrl: craftedCatalog.modes["survival-extreme"].privacyUrl,
+    contactUrl: craftedCatalog.modes["survival-extreme"].contactUrl,
+    supportEmail: craftedCatalog.modes["survival-extreme"].email,
+  },
+  {
+    id: "survival-dzialki",
+    name: "Survival Dzialki",
+    shortName: "DZL",
+    icon: "chest",
+    color: "emerald",
+    storefrontTitle: craftedCatalog.modes["survival-dzialki"].title,
+    storefrontUrl: craftedCatalog.modes["survival-dzialki"].pageUrl,
+    sourceServer: craftedCatalog.modes["survival-dzialki"].server,
+    regulationsUrl: craftedCatalog.modes["survival-dzialki"].regulationsUrl,
+    privacyUrl: craftedCatalog.modes["survival-dzialki"].privacyUrl,
+    contactUrl: craftedCatalog.modes["survival-dzialki"].contactUrl,
+    supportEmail: craftedCatalog.modes["survival-dzialki"].email,
+  },
+  {
+    id: "oneblock",
+    name: "OneBlock",
+    shortName: "ONE",
+    icon: "key",
+    color: "blue",
+    storefrontTitle: craftedCatalog.modes.oneblock.title,
+    storefrontUrl: craftedCatalog.modes.oneblock.pageUrl,
+    sourceServer: craftedCatalog.modes.oneblock.server,
+    regulationsUrl: craftedCatalog.modes.oneblock.regulationsUrl,
+    privacyUrl: craftedCatalog.modes.oneblock.privacyUrl,
+    contactUrl: craftedCatalog.modes.oneblock.contactUrl,
+    supportEmail: craftedCatalog.modes.oneblock.email,
+  },
+  {
+    id: "creative",
+    name: "Creative",
+    shortName: "CRE",
+    icon: "crown",
+    color: "violet",
+    storefrontTitle: craftedCatalog.modes.creative.title,
+    storefrontUrl: craftedCatalog.modes.creative.pageUrl,
+    sourceServer: craftedCatalog.modes.creative.server,
+    regulationsUrl: craftedCatalog.modes.creative.regulationsUrl,
+    privacyUrl: craftedCatalog.modes.creative.privacyUrl,
+    contactUrl: craftedCatalog.modes.creative.contactUrl,
+    supportEmail: craftedCatalog.modes.creative.email,
+  },
+  {
+    id: "box-pvp",
+    name: "BoxPvP",
+    shortName: "BOX",
+    icon: "sword",
+    color: "orange",
+    storefrontTitle: craftedCatalog.modes["box-pvp"].title,
+    storefrontUrl: craftedCatalog.modes["box-pvp"].pageUrl,
+    sourceServer: craftedCatalog.modes["box-pvp"].server,
+    regulationsUrl: craftedCatalog.modes["box-pvp"].regulationsUrl,
+    privacyUrl: craftedCatalog.modes["box-pvp"].privacyUrl,
+    contactUrl: craftedCatalog.modes["box-pvp"].contactUrl,
+    supportEmail: craftedCatalog.modes["box-pvp"].email,
+  },
 ];
 
 export const rankPerks: RankPerk[] = [
@@ -275,12 +387,62 @@ export const rankDefinitions: Record<string, RankDefinition[]> = {
   ],
 };
 
-type ProductSeed = Omit<Product, "description"> & { description?: string };
+type ProductSeed = Omit<
+  Product,
+  | "name"
+  | "description"
+  | "price"
+  | "subtitle"
+  | "previewLines"
+  | "details"
+  | "lowestPriceLabel"
+  | "lowestPriceLines"
+  | "paymentOptions"
+  | "sourcePageUrl"
+  | "sourceServiceId"
+> & {
+  name: string;
+  price: number;
+  description?: string;
+};
+
+function clonePaymentOptions(id: string): PaymentOption[] {
+  const crafted = craftedCatalog.products[id as keyof typeof craftedCatalog.products];
+  if (!crafted) return [];
+
+  return crafted.paymentOptions.map((option) => ({
+    id: option.id,
+    label: option.label,
+    price: option.price,
+    note: option.note,
+    buttonLabel: option.buttonLabel,
+    nicknamePlaceholder: option.nicknamePlaceholder,
+    legalText: option.legalText,
+    legalLinks: option.legalLinks.map((link) => ({
+      label: link.label,
+      href: link.href,
+    })),
+  }));
+}
 
 function product(seed: ProductSeed): Product {
+  const crafted = craftedCatalog.products[seed.id as keyof typeof craftedCatalog.products];
+  const details = crafted?.details ? [...crafted.details] : [];
+  const previewLines = crafted?.previewLines?.length ? [...crafted.previewLines] : details.slice(0, 2);
+
   return {
-    description: "Produkt Crafted.pl",
     ...seed,
+    name: crafted?.name ?? seed.name,
+    price: crafted?.displayPrice ?? seed.price,
+    description: seed.description ?? crafted?.summary ?? details[0] ?? "Produkt Crafted.pl",
+    subtitle: crafted?.subtitle ?? "",
+    previewLines,
+    details,
+    lowestPriceLabel: crafted?.lowestPriceLabel ?? null,
+    lowestPriceLines: crafted?.lowestPriceLines ? [...crafted.lowestPriceLines] : [],
+    paymentOptions: clonePaymentOptions(seed.id),
+    sourcePageUrl: crafted?.sourcePageUrl ?? null,
+    sourceServiceId: crafted?.sourceServiceId ?? seed.id.split("-").pop() ?? seed.id,
   };
 }
 
@@ -1095,3 +1257,7 @@ export const products: Product[] = [
     bonuses: ["Nowy typ dodatku", "Szybka poprawa ekwipunku"],
   }),
 ];
+
+
+
+

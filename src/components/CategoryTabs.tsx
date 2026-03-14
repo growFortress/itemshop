@@ -1,9 +1,6 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import floatingIsland from "@/assets/floating-island.png";
-import chestImg from "@/assets/chest.png";
-import crownImg from "@/assets/crown.png";
-import keyImg from "@/assets/key.png";
-import swordImg from "@/assets/sword.png";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { ProductCategoryId, ProductCategoryOption } from "@/lib/productCategory";
 
 interface CategoryTabsProps {
@@ -13,21 +10,30 @@ interface CategoryTabsProps {
 }
 
 const artMap = {
-  island: floatingIsland,
-  crown: crownImg,
-  key: keyImg,
-  chest: chestImg,
-  bundle: swordImg,
-  spark: swordImg,
-};
-
-const artClassMap = {
-  island: "h-28 w-28 sm:h-36 sm:w-36 md:h-40 md:w-40",
-  crown: "h-16 w-16 sm:h-20 sm:w-20",
-  key: "h-16 w-16 sm:h-20 sm:w-20",
-  chest: "h-16 w-16 sm:h-20 sm:w-20",
-  bundle: "h-20 w-20 sm:h-24 sm:w-24",
-  spark: "h-16 w-16 sm:h-20 sm:w-20",
+  island: {
+    src: "/kategorie/wszystkie.png",
+    imageClassName: "h-full w-full object-cover scale-[1.12]",
+  },
+  crown: {
+    src: "/kategorie/rangi.png",
+    imageClassName: "h-full w-full object-cover",
+  },
+  key: {
+    src: "/kategorie/klucze.png",
+    imageClassName: "h-full w-full object-cover",
+  },
+  chest: {
+    src: "/kategorie/skrzynie.png",
+    imageClassName: "h-full w-full object-cover",
+  },
+  bundle: {
+    src: "/kategorie/zestawy.png",
+    imageClassName: "h-full w-full object-cover",
+  },
+  spark: {
+    src: "/kategorie/dodatki.png",
+    imageClassName: "h-full w-full object-cover",
+  },
 };
 
 export default function CategoryTabs({
@@ -35,78 +41,88 @@ export default function CategoryTabs({
   categories,
   onCategoryChange,
 }: CategoryTabsProps) {
-  const featuredCategoryId = categories
-    .filter((category) => category.id !== "all")
-    .sort((left, right) => right.count - left.count)[0]?.id;
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const desktopGridClassName =
+    categories.length >= 5
+      ? "md:grid-cols-2 xl:grid-cols-3"
+      : categories.length === 4
+        ? "md:grid-cols-2 xl:grid-cols-4"
+        : categories.length === 3
+          ? "md:grid-cols-2 xl:grid-cols-3"
+          : "md:grid-cols-2";
+
+  useEffect(() => {
+    const activeButton = buttonRefs.current[activeCategory];
+    activeButton?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [activeCategory]);
 
   return (
-    <div className="mb-8">
-      <div className="grid auto-rows-[minmax(156px,1fr)] gap-3 md:grid-cols-12">
+    <div className="mb-10">
+      {categories.length > 1 ? (
+        <p className="mb-3 pl-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:hidden">
+          Przesun, aby zobaczyc wszystkie kategorie
+        </p>
+      ) : null}
+
+      <div
+        className={[
+          "-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 pt-1 scrollbar-hide snap-x-mandatory",
+          "md:mx-0 md:grid md:gap-5 md:overflow-visible md:px-0 md:pb-0 md:pt-2",
+          desktopGridClassName,
+        ].join(" ")}
+      >
         {categories.map((category, index) => {
           const active = activeCategory === category.id;
-          const isFeatured = category.id === featuredCategoryId;
           const art = artMap[category.art];
+          const actionLabel = active ? "Aktywna kategoria" : "Otworz kategorie";
 
           return (
             <motion.button
               key={category.id}
+              ref={(node) => {
+                buttonRefs.current[category.id] = node;
+              }}
               type="button"
               onClick={() => onCategoryChange(category.id)}
+              aria-pressed={active}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22, delay: index * 0.04 }}
               whileHover={{ y: -4 }}
               whileTap={{ scale: 0.99 }}
-              className={`group relative overflow-hidden rounded-[28px] border-[4px] p-0 text-left transition-transform ${category.accentClassName} ${category.layoutClassName}`}
+              className="group min-w-[292px] snap-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/55 focus-visible:ring-offset-2 md:min-w-0"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${category.surfaceClassName}`} />
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_2px,transparent_2px),linear-gradient(90deg,rgba(255,255,255,0.08)_2px,transparent_2px)] bg-[size:24px_24px] opacity-20" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_28%)] opacity-80" />
-
-              {active && (
-                <motion.div
-                  layoutId="active-category-outline"
-                  className="absolute inset-[8px] rounded-[18px] border-[3px] border-[#fff4b5] shadow-[0_0_0_3px_rgba(32,37,47,0.2)]"
-                  transition={{ type: "spring", stiffness: 280, damping: 24 }}
+              <div
+                className={`relative h-[228px] md:h-[242px] overflow-hidden rounded-[26px] border border-[#e7d9bf] bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.26),transparent_36%),linear-gradient(180deg,#fffdf8_0%,#f3e7d4_100%)] shadow-[0_18px_32px_-22px_rgba(15,23,42,0.28)] ${
+                  active ? "ring-2 ring-[#ffe08a]/50" : ""
+                }`}
+              >
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br opacity-85 ${category.heroGradientClassName}`}
                 />
-              )}
+                <img
+                  src={art.src}
+                  alt=""
+                  className={`absolute inset-0 h-full w-full object-cover opacity-24 mix-blend-screen transition-transform duration-300 ${
+                    active ? "scale-[1.06]" : "scale-[1.02] group-hover:scale-[1.06]"
+                  } ${art.imageClassName}`}
+                />
 
-              {isFeatured && (
-                <span className="absolute right-4 top-4 z-20 rounded-full border-2 border-[#9d7b0b] bg-[#f8d84f] px-3 py-1 font-bold text-[#2d2105] shadow-[0_4px_0_0_#9d7b0b]">
-                  Most Popular
-                </span>
-              )}
-
-              <div className={`relative z-10 flex h-full flex-col justify-between p-4 sm:p-5 ${category.textClassName}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="max-w-[220px]">
-                    <p className="font-pixel text-[10px] uppercase tracking-[0.16em] opacity-80">
-                      {category.eyebrow}
+                <div className="relative z-10 flex h-full flex-col p-4 sm:p-5">
+                  <div className="mt-auto">
+                    <p className="font-pixel text-[10px] uppercase tracking-[0.14em] text-white/80">
+                      {category.ctaLabel}
                     </p>
-                    <h3 className="mt-3 font-pixel text-lg uppercase leading-tight sm:text-[22px]">
-                      {category.label}
+                    <h3 className="pixel-title-banner mt-4 text-[1.45rem] leading-[1.06] sm:text-[1.68rem]">
+                      {category.posterTitle}
                     </h3>
-                    <p className="mt-3 max-w-[26ch] text-sm leading-relaxed opacity-90">
+                    <p className="mt-4 max-w-[17rem] text-sm leading-relaxed text-white/90">
                       {category.description}
                     </p>
-                  </div>
-
-                  <span className="rounded-full border-2 border-black/15 bg-white/20 px-3 py-1 text-sm font-bold shadow-[0_3px_0_0_rgba(0,0,0,0.16)] backdrop-blur-sm">
-                    {category.count}
-                  </span>
-                </div>
-
-                <div className="mt-6 flex items-end justify-between gap-4">
-                  <span className="inline-flex rounded-full border-2 border-black/15 bg-black/15 px-3 py-1.5 font-pixel text-[10px] uppercase tracking-[0.14em] shadow-[0_3px_0_0_rgba(0,0,0,0.16)]">
-                    {category.ctaLabel}
-                  </span>
-
-                  <div className="relative flex shrink-0 items-end">
-                    <img
-                      src={art}
-                      alt=""
-                      className={`pixel-art drop-shadow-[0_12px_20px_rgba(0,0,0,0.24)] transition-transform duration-300 group-hover:translate-y-[-2px] ${artClassMap[category.art]}`}
-                    />
                   </div>
                 </div>
               </div>

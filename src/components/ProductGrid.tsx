@@ -1,19 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BarChart3, Package, ShoppingCart, Sparkles } from "lucide-react";
-import { Product, gameModes, products } from "@/data/shopData";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Package } from "lucide-react";
+import { GameMode, Product } from "@/data/shopData";
 import { ProductCategoryId, buildCategories, filterByCategory } from "@/lib/productCategory";
+import { Skeleton } from "@/components/ui/skeleton";
 import ProductCard from "./ProductCard";
 import CategoryTabs from "./CategoryTabs";
 
 interface ProductGridProps {
   activeGameMode: string;
-  activeCartMode: string | null;
-  cartItems: number;
+  gameModes: GameMode[];
+  products: Product[];
+  isLoading?: boolean;
+  cartEnabled?: boolean;
   cartProductQuantities: Record<string, number>;
-  onAddProduct: (product: Product) => void;
+  onOpenProduct: (product: Product) => void;
+  onBuyNow: (product: Product) => void;
   onCompareRanks: () => void;
-  onOpenCart: () => void;
 }
 
 const categorySortWeight: Record<Product["type"], number> = {
@@ -37,6 +40,15 @@ const badgeWeight: Record<NonNullable<Product["badge"]>, number> = {
   new: 2,
 };
 
+const categoryArtMap = {
+  island: "/kategorie/wszystkie.png",
+  crown: "/kategorie/rangi.png",
+  key: "/kategorie/klucze.png",
+  chest: "/kategorie/skrzynie.png",
+  bundle: "/kategorie/zestawy.png",
+  spark: "/kategorie/dodatki.png",
+} as const;
+
 function sortProductsForStorefront(left: Product, right: Product) {
   const priorityDiff = (left.sortPriority ?? 999) - (right.sortPriority ?? 999);
   if (priorityDiff !== 0) {
@@ -47,7 +59,9 @@ function sortProductsForStorefront(left: Product, right: Product) {
     return left.popular ? -1 : 1;
   }
 
-  const badgeDiff = (left.badge ? badgeWeight[left.badge] : 99) - (right.badge ? badgeWeight[right.badge] : 99);
+  const badgeDiff =
+    (left.badge ? badgeWeight[left.badge] : 99) -
+    (right.badge ? badgeWeight[right.badge] : 99);
   if (badgeDiff !== 0) {
     return badgeDiff;
   }
@@ -62,28 +76,37 @@ function sortProductsForStorefront(left: Product, right: Product) {
     return rarityDiff;
   }
 
-  const priceDiff = right.price - left.price;
-  if (priceDiff !== 0) {
-    return priceDiff;
+  // Group same-name products together (e.g. all "Konto SuperVip" variants, then all "Konto VIP")
+  const nameCmp = left.name.localeCompare(right.name, "pl");
+  if (nameCmp !== 0) {
+    return nameCmp;
   }
 
-  return left.name.localeCompare(right.name, "pl");
+  // Within the same name, sort by price descending (longest/most expensive first)
+  return right.price - left.price;
 }
 
 export default function ProductGrid({
   activeGameMode,
-  activeCartMode,
-  cartItems,
+  gameModes,
+  products,
+  isLoading = false,
+  cartEnabled = true,
   cartProductQuantities,
-  onAddProduct,
+  onOpenProduct,
+  onBuyNow,
   onCompareRanks,
-  onOpenCart,
 }: ProductGridProps) {
   const [activeCategory, setActiveCategory] = useState<ProductCategoryId>("all");
+  const offerHeadingRef = useRef<HTMLDivElement | null>(null);
+  const hasSelectedMode = Boolean(activeGameMode);
 
   const modeProducts = useMemo(
-    () => products.filter((product) => product.gameMode === activeGameMode).sort(sortProductsForStorefront),
-    [activeGameMode]
+    () =>
+      products
+        .filter((product) => product.gameMode === activeGameMode)
+        .sort(sortProductsForStorefront),
+    [activeGameMode, products]
   );
   const categories = useMemo(() => buildCategories(modeProducts), [modeProducts]);
   const filteredProducts = useMemo(
@@ -92,232 +115,240 @@ export default function ProductGrid({
   );
   const activeModeLabel = useMemo(
     () => gameModes.find((mode) => mode.id === activeGameMode)?.name ?? "Wybrany tryb",
-    [activeGameMode]
+    [activeGameMode, gameModes]
   );
   const hasRanks = useMemo(
     () => modeProducts.some((product) => product.type === "rank"),
     [modeProducts]
   );
-  const activeCategoryLabel =
-    categories.find((category) => category.id === activeCategory)?.label ?? "Wybrana plansza";
-  const hasCartForActiveMode = cartItems > 0 && (!activeCartMode || activeCartMode === activeGameMode);
-  const cartSummaryLabel =
-    cartItems === 1 ? "1 pakiet w koszyku" : `${cartItems} szt. w koszyku`;
+  const selectedCategory = useMemo(
+    () => categories.find((category) => category.id === activeCategory),
+    [activeCategory, categories]
+  );
+  const heroCategory = selectedCategory ?? categories[0];
+  const heroArt = heroCategory ? categoryArtMap[heroCategory.art] : categoryArtMap.island;
+  const heroDescription = heroCategory
+    ? activeCategory === "all"
+      ? `To jest glowne wejscie do sklepu dla ${activeModeLabel}. Przelaczaj kategorie jak w launcherze i wchodz tylko w te pakiety, ktore faktycznie chcesz porownac lub kupic.`
+      : `${heroCategory.description} W tej sekcji pokazujemy tylko oferty dla ${activeModeLabel}, zeby caly listing byl szybszy, czytelniejszy i bardziej skupiony.`
+    : "";
 
   useEffect(() => {
     setActiveCategory("all");
   }, [activeGameMode]);
 
-  return (
-    <section className="relative mx-auto max-w-6xl px-4 py-6 pb-10">
-      <div className="mb-6 overflow-hidden rounded-[32px] border-[3px] border-[#2d3038] bg-[#1f242c] text-white shadow-[0_10px_0_0_#2d3038,0_28px_40px_-30px_rgba(0,0,0,0.5)]">
-        <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_380px]">
-          <div className="border-b border-white/10 px-5 py-5 lg:border-b-0 lg:border-r lg:px-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border-2 border-[#9d7b0b] bg-[#f7d04e] px-3 py-1 font-pixel text-[10px] uppercase tracking-[0.16em] text-[#342203] shadow-[0_3px_0_0_#9d7b0b]">
-                Aktywny sklep
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
-                Serwer: {activeModeLabel}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
-                {modeProducts.length} pakietow
-              </span>
-              {hasCartForActiveMode && (
-                <span className="rounded-full border border-[#f7d04e]/40 bg-[#f7d04e]/10 px-3 py-1 text-xs font-semibold text-[#f7d04e]">
-                  {cartSummaryLabel}
-                </span>
-              )}
-            </div>
+  const handleCategoryChange = useCallback(
+    (nextCategory: ProductCategoryId) => {
+      if (nextCategory === activeCategory) {
+        return;
+      }
 
-            <h2 className="mt-4 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-[2.5rem]">
-              Pakiety dla <span className="text-[#f7d04e]">{activeModeLabel}</span>
+      setActiveCategory(nextCategory);
+
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+        requestAnimationFrame(() => {
+          offerHeadingRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+      }
+    },
+    [activeCategory]
+  );
+
+  if (isLoading) {
+    return (
+      <section className="relative mx-auto max-w-[1240px] px-4 py-6 pb-12">
+        <div className="panel-soft relative mb-6 overflow-hidden rounded-[30px] p-5 sm:p-6">
+          <div className="minecraft-strip absolute inset-x-0 top-0 h-[4px]" />
+          <div className="max-w-3xl">
+            <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
+              Kategorie sklepu
+            </p>
+            <Skeleton className="mt-2 h-9 w-full max-w-[30rem] rounded-2xl sm:h-10" />
+            <Skeleton className="mt-3 h-4 w-full max-w-[18rem] rounded-full" />
+          </div>
+        </div>
+
+        <div className="mb-6 flex flex-wrap gap-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              className="h-11 w-[140px] rounded-full"
+            />
+          ))}
+        </div>
+
+        <div className="mb-5">
+          <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
+            Widok oferty
+          </p>
+          <Skeleton className="mt-2 h-8 w-full max-w-[24rem] rounded-2xl" />
+          <Skeleton className="mt-3 h-4 w-full max-w-[16rem] rounded-full" />
+        </div>
+
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))]">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="panel-soft relative overflow-hidden rounded-[28px] p-4 sm:p-5"
+            >
+              <div className="minecraft-strip absolute inset-x-0 top-0 h-[4px] opacity-75" />
+              <Skeleton className="h-40 w-full rounded-[22px]" />
+              <Skeleton className="mt-4 h-5 w-2/3 rounded-full" />
+              <Skeleton className="mt-3 h-4 w-full rounded-full" />
+              <Skeleton className="mt-2 h-4 w-4/5 rounded-full" />
+              <div className="mt-5 flex items-center justify-between gap-3">
+                <Skeleton className="h-10 w-24 rounded-xl" />
+                <Skeleton className="h-10 w-28 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!hasSelectedMode) {
+    return (
+      <section className="relative mx-auto max-w-[1240px] px-4 py-6 pb-12">
+        <div className="panel-soft relative overflow-hidden rounded-[30px] p-6 sm:p-7">
+          <div className="minecraft-strip absolute inset-x-0 top-0 h-[4px]" />
+          <div className="max-w-3xl">
+            <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
+              Widok oferty
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-foreground sm:text-[2rem]">
+              Czekamy na wybor serwera
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
-              Ponizej masz plansze kategorii i gotowe pakiety tylko dla tego serwera. Zacznij od
-              planszy "Wszystko" albo kliknij od razu w Rangi, Klucze lub Bundle.
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-[15px]">
+              Wybierz jeden z trybow powyzej, a od razu pokazemy tylko kategorie i pakiety z tego
+              konkretnego sklepu.
             </p>
           </div>
 
-          <div className="bg-[linear-gradient(180deg,#252b34_0%,#1b2028_100%)] px-5 py-5 lg:px-6">
-            <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-[#f7d04e]">
-              Co teraz?
-            </p>
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] border-2 border-[#9d7b0b] bg-[#f7d04e] font-pixel text-[11px] text-[#342203] shadow-[0_3px_0_0_#9d7b0b]">
-                    1
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-white">Jestes w dobrym miejscu</p>
-                    <p className="mt-1 text-xs leading-relaxed text-white/65">
-                      Ogladasz sklep dla trybu {activeModeLabel}.
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="inventory-slot rounded-[20px] px-4 py-3.5">
+              <p className="font-pixel text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                Serwer
+              </p>
+              <p className="mt-2 text-sm font-bold text-foreground">Jeszcze nie wybrany</p>
+            </div>
 
-              <div className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] border-2 border-[#9d7b0b] bg-[#f7d04e] font-pixel text-[11px] text-[#342203] shadow-[0_3px_0_0_#9d7b0b]">
-                    2
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {activeCategory === "all" ? "Wybierz plansze lub pakiet" : `Plansza: ${activeCategoryLabel}`}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-white/65">
-                      {activeCategory === "all"
-                        ? "Masz nizej kategorie Wszystko, Rangi, Klucze, Skrzynie i Bundle."
-                        : "Wszystkie produkty nizej naleza do tej kategorii i tego trybu."}
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="inventory-slot rounded-[20px] px-4 py-3.5">
+              <p className="font-pixel text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                Kategorie
+              </p>
+              <p className="mt-2 text-sm font-bold text-foreground">Pokazemy po wyborze</p>
+            </div>
 
-              <div className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] border-2 border-[#9d7b0b] bg-[#f7d04e] font-pixel text-[11px] text-[#342203] shadow-[0_3px_0_0_#9d7b0b]">
-                    3
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white">
-                      {hasCartForActiveMode ? "Masz juz cos w koszyku" : "Dodaj pierwszy pakiet"}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-white/65">
-                      {hasCartForActiveMode
-                        ? `W koszyku czeka ${cartSummaryLabel.toLowerCase()}. Otworz koszyk i przejdz dalej do danych gracza oraz platnosci.`
-                        : "Kliknij przycisk Dodaj do koszyka na wybranej karcie produktu."}
-                    </p>
-
-                    {hasCartForActiveMode && (
-                      <button
-                        type="button"
-                        onClick={onOpenCart}
-                        className="mt-3 inline-flex items-center gap-2 rounded-[16px] border-2 border-[#8c5a12] bg-[#f7d04e] px-4 py-2.5 font-pixel text-[11px] uppercase tracking-[0.14em] text-[#342203] shadow-[0_4px_0_0_#8c5a12] transition-transform hover:translate-y-[-1px]"
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                        Otworz koszyk
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+            <div className="inventory-slot rounded-[20px] px-4 py-3.5">
+              <p className="font-pixel text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                Pakiety
+              </p>
+              <p className="mt-2 text-sm font-bold text-foreground">Bez mieszania miedzy trybami</p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="relative mx-auto max-w-[1240px] px-4 py-6 pb-12">
+
 
       {categories.length > 1 && (
-        <CategoryTabs
-          activeCategory={activeCategory}
-          categories={categories}
-          onCategoryChange={setActiveCategory}
-        />
+        <>
+          <h2 className="mb-4 text-lg font-bold text-foreground sm:text-xl">
+            Wybierz kategorię dla serwera{" "}
+            <span className="text-primary">{activeModeLabel}</span>
+          </h2>
+          <CategoryTabs
+            activeCategory={activeCategory}
+            categories={categories}
+            onCategoryChange={handleCategoryChange}
+          />
+        </>
       )}
 
-      {hasRanks && activeCategory === "rank" && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex flex-col gap-3 rounded-[28px] border-[3px] border-[#d8cfbf] bg-[#fffaf0] p-4 shadow-[0_8px_0_0_#d8cfbf]"
-        >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
-                Porownanie rang
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Nie musisz otwierac kazdej karty osobno. Tu szybko sprawdzisz, ktora ranga daje
-                najwiecej.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onCompareRanks}
-              className="inline-flex items-center justify-center gap-2 rounded-[18px] border-2 border-[#8c5a12] bg-[#f7d04e] px-4 py-3 font-pixel text-[11px] uppercase tracking-[0.14em] text-[#342203] shadow-[0_4px_0_0_#8c5a12] transition-transform hover:translate-y-[-1px]"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Porownaj rangi
-            </button>
+      <div
+        ref={offerHeadingRef}
+        id="offer-view"
+        className="mb-6 scroll-mt-24"
+      >
+        <div className="flex flex-col gap-3 border-b border-[#dcc7a2] pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
+              Widok oferty
+            </p>
+            <h3 className="mt-2 text-2xl font-black tracking-tight text-foreground">
+              {activeCategory === "all"
+                ? `Wszystkie pakiety dla ${activeModeLabel}`
+                : `${selectedCategory?.label ?? "Wybrana kategoria"} dla ${activeModeLabel}`}
+            </h3>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              {activeCategory === "all"
+                ? "Przegladasz cala oferte tego serwera. Kliknij pakiet, zeby wejsc w szczegoly i podjac decyzje dopiero w modalu produktu."
+                : `Pokazujemy tylko pakiety z kategorii ${selectedCategory?.label?.toLowerCase() ?? "wybranej kategorii"}, zeby ten listing dzialal szybciej i byl bardziej skupiony.`}
+            </p>
           </div>
-        </motion.div>
-      )}
 
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
-            Aktualna oferta
-          </p>
-          <h3 className="mt-2 text-2xl font-black tracking-tight text-foreground">
-            {activeCategory === "all"
-              ? `Wszystkie pakiety dla ${activeModeLabel}`
-              : `Pakiety: ${categories.find((category) => category.id === activeCategory)?.label ?? "Wybrana kategoria"}`}
-          </h3>
-        </div>
-
-        <div className="inline-flex items-center gap-2 self-start rounded-full border-[2px] border-[#d8cfbf] bg-[#fffaf0] px-4 py-2 shadow-[0_4px_0_0_#d8cfbf]">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-foreground">
-            {filteredProducts.length} pakietow na tej planszy
+          <span className="shop-badge border-[#d6c09a] bg-[#fff5dd] text-[#7a5714]">
+            {filteredProducts.length} pakietow
           </span>
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${activeGameMode}-${activeCategory}`}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.22 }}
-          className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
-        >
-          {filteredProducts.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              index={index}
-              quantityInCart={cartProductQuantities[product.id] ?? 0}
-              onAddToCart={onAddProduct}
-            />
-          ))}
-        </motion.div>
-      </AnimatePresence>
-
-      {filteredProducts.length === 0 && (
-        <div className="rounded-[28px] border-[3px] border-dashed border-[#d8cfbf] bg-[#fffaf0] py-16 text-center text-muted-foreground">
-          <Package className="mx-auto mb-4 h-10 w-10 opacity-40" />
-          <p className="font-pixel text-sm text-foreground">Brak pakietow w tej kategorii</p>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed">
-            Sprobuj innej planszy albo przelacz tryb, jesli szukasz pakietow dla innego serwera.
-          </p>
+      {hasRanks && activeCategory === "rank" && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-[22px] border border-primary/20 bg-primary/5 px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              Nie wiesz, która ranga jest dla Ciebie?
+            </p>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              Porównaj wszystkie rangi obok siebie i sprawdź, co dostajesz w każdym pakiecie.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onCompareRanks}
+            className="shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Porównaj rangi
+          </button>
         </div>
       )}
 
-      {filteredProducts.length > 0 && (
-        <div className="mt-8 rounded-[28px] border-[3px] border-[#d8cfbf] bg-[#fffaf0] px-5 py-5 shadow-[0_8px_0_0_#d8cfbf]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-pixel text-[10px] uppercase tracking-[0.16em] text-primary">
-                Koniec listy
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                To sa wszystkie oferty dla tego trybu i aktualnej planszy kategorii.
-              </p>
-            </div>
+      <motion.div
+        key={`${activeGameMode}-${activeCategory}`}
+        initial={{ opacity: 0.72, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.16, ease: "easeOut" }}
+        className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))]"
+      >
+        {filteredProducts.map((product, index) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            index={index}
+            cartEnabled={cartEnabled}
+            quantityInCart={cartProductQuantities[product.id] ?? 0}
+            onOpenProduct={onOpenProduct}
+            onBuyNow={onBuyNow}
+          />
+        ))}
+      </motion.div>
 
-            <button
-              type="button"
-              onClick={() => setActiveCategory("all")}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[#d8cfbf] bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              Wroc do wszystkich
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
+      {filteredProducts.length === 0 && (
+        <div className="panel-soft relative overflow-hidden rounded-[28px] border-dashed py-16 text-center text-muted-foreground">
+          <div className="minecraft-strip absolute inset-x-0 top-0 h-[4px]" />
+          <Package className="mx-auto mb-4 h-10 w-10 opacity-40" />
+          <p className="text-base font-semibold text-foreground">Brak pakietow w tej kategorii</p>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed">
+            Sprobuj innej kategorii albo przelacz serwer, jesli szukasz pakietow dla innej oferty.
+          </p>
         </div>
       )}
     </section>

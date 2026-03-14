@@ -7,13 +7,16 @@ export interface ProductCategoryOption {
   label: string;
   eyebrow: string;
   description: string;
+  posterTitle: string;
   art: "island" | "crown" | "key" | "chest" | "bundle" | "spark";
   count: number;
   order: number;
   accentClassName: string;
+  heroGradientClassName: string;
+  heroBadgeClassName: string;
   surfaceClassName: string;
-  textClassName: string;
-  layoutClassName: string;
+  iconClassName: string;
+  badgeClassName: string;
   ctaLabel: string;
 }
 
@@ -23,87 +26,99 @@ const categoryMeta: Record<
 > = {
   all: {
     id: "all",
-    label: "Wszystko",
-    eyebrow: "Start tutaj",
-    description: "Rangi, klucze, skrzynie i bundle w jednym miejscu.",
+    label: "Wszystkie",
+    eyebrow: "Pelna oferta",
+    description: "Rangi, klucze, skrzynie i zestawy w jednym widoku.",
+    posterTitle: "SKLEP",
     art: "island",
     order: 0,
-    accentClassName: "border-[#2f3440] bg-[#20252f]",
-    surfaceClassName:
-      "from-[#313948] via-[#232936] to-[#1b2029] before:bg-[linear-gradient(90deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_10px,transparent_10px,transparent_20px)]",
-    textClassName: "text-white",
-    layoutClassName: "md:col-span-5 md:row-span-2",
-    ctaLabel: "Pokaz wszystko",
+    accentClassName: "border-[#88ab69]",
+    heroGradientClassName: "from-[#f8b44a] via-[#d86a2b] to-[#6b1f34]",
+    heroBadgeClassName: "border-[#ffd26a]/35 bg-[#fff2b0]/15 text-[#fff4c7]",
+    surfaceClassName: "from-[#fdfff8] via-[#f2f8e9] to-[#e5efda]",
+    iconClassName: "border-[#d3e0c3] bg-[#edf6e4]",
+    badgeClassName: "border-[#d3e0c3] bg-[#edf6e4] text-[#355126]",
+    ctaLabel: "Pokaz cala oferte",
   },
   rank: {
     id: "rank",
     label: "Rangi",
-    eyebrow: "Premium",
-    description: "Stale bonusy, wygoda i porownanie rang.",
+    eyebrow: "Stale bonusy",
+    description: "Dostep do rang, perkow i szybkiego porownania.",
+    posterTitle: "RANGI",
     art: "crown",
     order: 1,
-    accentClassName: "border-[#7a2127] bg-[#c73242]",
-    surfaceClassName:
-      "from-[#d54858] via-[#c73242] to-[#a61d2e] before:bg-[linear-gradient(180deg,rgba(255,255,255,0.11)_0,rgba(255,255,255,0.05)_42%,transparent_42%)]",
-    textClassName: "text-[#fff7f5]",
-    layoutClassName: "md:col-span-3",
-    ctaLabel: "Zobacz rangi",
+    accentClassName: "border-[#d7b565]",
+    heroGradientClassName: "from-[#ff5877] via-[#d71c50] to-[#6e1736]",
+    heroBadgeClassName: "border-[#ffd27a]/35 bg-[#fff1b9]/15 text-[#fff4d4]",
+    surfaceClassName: "from-[#fffef7] via-[#fff5dc] to-[#f9e9b9]",
+    iconClassName: "border-[#edd796] bg-[#fff4d3]",
+    badgeClassName: "border-[#edd796] bg-[#fff4d3] text-[#8a6210]",
+    ctaLabel: "Przejdz do rang",
   },
   key: {
     id: "key",
     label: "Klucze",
-    eyebrow: "Drop",
-    description: "Szybkie zakupy do skrzyn i losowan.",
+    eyebrow: "Otwieranie dropu",
+    description: "Pakiety kluczy do skrzyn i szybkich losowan.",
+    posterTitle: "KLUCZE",
     art: "key",
     order: 2,
-    accentClassName: "border-[#3c7aa7] bg-[#4ea2d9]",
-    surfaceClassName:
-      "from-[#62b8e6] via-[#4ea2d9] to-[#347dba] before:bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_28%)]",
-    textClassName: "text-[#f9fdff]",
-    layoutClassName: "md:col-span-4",
-    ctaLabel: "Kup klucze",
+    accentClassName: "border-[#7fb8db]",
+    heroGradientClassName: "from-[#42d8ff] via-[#1d93e8] to-[#27406d]",
+    heroBadgeClassName: "border-[#b7ebff]/35 bg-[#dff7ff]/15 text-[#ebfbff]",
+    surfaceClassName: "from-[#fbfeff] via-[#edf7ff] to-[#dfeffc]",
+    iconClassName: "border-[#cbe1f0] bg-[#eef8ff]",
+    badgeClassName: "border-[#cbe1f0] bg-[#eef8ff] text-[#2f6688]",
+    ctaLabel: "Przejdz do kluczy",
   },
   chest: {
     id: "chest",
     label: "Skrzynie",
-    eyebrow: "Otwarcia",
-    description: "Mystery boxy i skrzynie z dropem.",
+    eyebrow: "Losowe nagrody",
+    description: "Otwarcia skrzyn i paczki z losowymi bonusami.",
+    posterTitle: "SKRZYNIE",
     art: "chest",
     order: 3,
-    accentClassName: "border-[#b08a12] bg-[#f2d03c]",
-    surfaceClassName:
-      "from-[#ffe46c] via-[#f2d03c] to-[#d5aa1f] before:bg-[linear-gradient(90deg,rgba(255,255,255,0.1)_0,rgba(255,255,255,0.1)_12px,transparent_12px,transparent_24px)]",
-    textClassName: "text-[#3c2404]",
-    layoutClassName: "md:col-span-4",
-    ctaLabel: "Otworz skrzynie",
+    accentClassName: "border-[#c89b63]",
+    heroGradientClassName: "from-[#ffca6f] via-[#d8863c] to-[#6c2b25]",
+    heroBadgeClassName: "border-[#ffe0a4]/35 bg-[#fff0ca]/15 text-[#fff5e0]",
+    surfaceClassName: "from-[#fffbf6] via-[#f8ebdc] to-[#efd4b2]",
+    iconClassName: "border-[#e8cbac] bg-[#fff1e1]",
+    badgeClassName: "border-[#e8cbac] bg-[#fff1e1] text-[#8f5624]",
+    ctaLabel: "Przejdz do skrzyn",
   },
   set: {
     id: "set",
-    label: "Bundle",
-    eyebrow: "Duze pakiety",
-    description: "Mocne zestawy dla szybkiego progresu.",
+    label: "Zestawy",
+    eyebrow: "Pakiety laczone",
+    description: "Wieksze zestawy dla graczy, ktorzy chca kupic wiecej naraz.",
+    posterTitle: "ZESTAWY",
     art: "bundle",
     order: 4,
-    accentClassName: "border-[#ab5b14] bg-[#eb8c2b]",
-    surfaceClassName:
-      "from-[#f5a245] via-[#eb8c2b] to-[#cf6d17] before:bg-[linear-gradient(180deg,rgba(255,255,255,0.08)_0,rgba(255,255,255,0.08)_16px,transparent_16px)]",
-    textClassName: "text-[#fff8f1]",
-    layoutClassName: "md:col-span-7",
-    ctaLabel: "Zobacz bundle",
+    accentClassName: "border-[#82a85c]",
+    heroGradientClassName: "from-[#88d964] via-[#4ea551] to-[#2a5643]",
+    heroBadgeClassName: "border-[#d9ffb8]/35 bg-[#f0ffd2]/15 text-[#f4ffe8]",
+    surfaceClassName: "from-[#fbfff8] via-[#eef7e5] to-[#ddeccd]",
+    iconClassName: "border-[#cfe0c0] bg-[#eef7e5]",
+    badgeClassName: "border-[#cfe0c0] bg-[#eef7e5] text-[#42602c]",
+    ctaLabel: "Przejdz do zestawow",
   },
   other: {
     id: "other",
     label: "Dodatki",
-    eyebrow: "Extra",
-    description: "Specjalne przedmioty i drobne boosty.",
+    eyebrow: "Dodatkowe bonusy",
+    description: "Specjalne przedmioty, boosty i mniejsze dodatki.",
+    posterTitle: "BONUSY",
     art: "spark",
     order: 5,
-    accentClassName: "border-[#7248b4] bg-[#8f63d4]",
-    surfaceClassName:
-      "from-[#a278ea] via-[#8f63d4] to-[#6f45b0] before:bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_24%)]",
-    textClassName: "text-[#faf6ff]",
-    layoutClassName: "md:col-span-5",
-    ctaLabel: "Sprawdz dodatki",
+    accentClassName: "border-[#a491da]",
+    heroGradientClassName: "from-[#9f8cff] via-[#6f56e6] to-[#2d2b6b]",
+    heroBadgeClassName: "border-[#e0d7ff]/35 bg-[#f1edff]/15 text-[#f5f2ff]",
+    surfaceClassName: "from-[#fcfbff] via-[#f2efff] to-[#e5defc]",
+    iconClassName: "border-[#ddd5f3] bg-[#f5f1ff]",
+    badgeClassName: "border-[#ddd5f3] bg-[#f5f1ff] text-[#654b99]",
+    ctaLabel: "Przejdz do dodatkow",
   },
 };
 
